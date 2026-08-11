@@ -3,7 +3,7 @@ module github.com/donkeyx/dead-drop
 go 1.26
 
 require (
-	golang.org/x/crypto v0.46.0
+	golang.org/x/crypto v0.52.0
 	modernc.org/sqlite v1.56.0
 )
 
