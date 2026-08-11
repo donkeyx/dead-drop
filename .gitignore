@@ -1,0 +1,6 @@
+bin/
+dist/
+tmp/
+*.wasm
+*.test
+.DS_Store
