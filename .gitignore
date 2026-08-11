@@ -1,6 +1,8 @@
 bin/
 dist/
 tmp/
-*.wasm
 *.test
 .DS_Store
+# built artifacts (regenerate with make wasm)
+web/static/dead-drop.wasm
+web/static/wasm_exec.js

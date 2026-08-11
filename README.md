@@ -17,7 +17,8 @@ https://your.host/s/<id>#<key>
 | **PR3 — store + Take** | done (`store/` FS + SQLite) |
 | **PR4 — HTTP API** | done (`server/`, `dead-drop serve`) |
 | **PR5 — network put/get** | done |
-| UI / WASM | next |
+| **PR6 — WASM crypto** | done (`make wasm` / `make wasm-test`) |
+| HTMX UI | next (PR7) |
 
 ## CLI (offline)
 
@@ -55,6 +56,27 @@ curl -sS -X POST http://127.0.0.1:8080/api/v1/secrets \
 ```
 
 No CORS. Fragment keys never go to the server.
+
+## Browser WASM
+
+```bash
+make wasm        # web/static/dead-drop.wasm + wasm_exec.js
+make wasm-test   # Node harness opens PR1 golden vectors
+```
+
+```html
+<script src="/static/wasm_exec.js"></script>
+<script src="/static/deaddrop.js"></script>
+<script>
+  const { blob, key } = await DeadDrop.encrypt(new TextEncoder().encode("hi"), {
+    contentType: "text/plain",
+  });
+  // POST blob to /api/v1/secrets; share URL + "#" + key
+  const { plaintext } = await DeadDrop.decrypt(blob, key);
+</script>
+```
+
+Gzip size target ≤ 1.5 MiB (currently ~1.0 MiB).
 
 ## Library (PR1)
 
