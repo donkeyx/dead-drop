@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "master_key_b64url": "QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI",
+  "passphrase": "test-passphrase-for-vectors",
+  "plaintext_b64url": "cGFzc3BocmFzZSBwcm90ZWN0ZWQgcGF5bG9hZA",
+  "blob_b64url": "U0VBTAEBABoQw8PDw8PDw8PDw8PDw8PDwwAAAAIAAIAAAbKysrKysrKysrKysrKysrKysrKysrKysqicHy5AJzQdhhFPBjwh-TBb-asEcyPcPozVfPc1L1GLgqMgszvzNr1bYgOIMao2nEa5enTH8vW9JjuV1zBYQTce-vTdjivC0disRkLnGtJ3q54BJqpgMZ1cgVX6B2OEMq3O8r7JcOdmwyo",
+  "filename": "secret.txt",
+  "content_type": "text/plain; charset=utf-8",
+  "salt_b64url": "w8PDw8PDw8PDw8PDw8PDww",
+  "nonce_b64url": "srKysrKysrKysrKysrKysrKysrKysrKy",
+  "argon_time": 2,
+  "argon_mem_kib": 32768,
+  "argon_para": 1
+}
