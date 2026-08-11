@@ -1,7 +1,10 @@
-.PHONY: test tidy vectors generate-vectors
+.PHONY: test tidy build vectors generate-vectors
 
 test:
 	go test ./...
+
+build:
+	go build -o bin/dead-drop ./cmd/dead-drop
 
 tidy:
 	go mod tidy
