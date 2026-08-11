@@ -15,7 +15,8 @@ https://your.host/s/<id>#<key>
 | **PR1 — SEAL blob library** | done (`blob/`) |
 | **PR2 — offline CLI** | done (`cmd/dead-drop` seal/open) |
 | **PR3 — store + Take** | done (`store/` FS + SQLite) |
-| HTTP / UI / WASM | next |
+| **PR4 — HTTP API** | done (`server/`, `dead-drop serve`) |
+| UI / WASM | next |
 
 ## CLI (offline)
 
@@ -33,6 +34,24 @@ export DEADDROP_PASS='correct horse'
 ./bin/dead-drop seal -in f -out f.seal -key-out k -passphrase-env DEADDROP_PASS
 ./bin/dead-drop open -in f.seal -out f -key-file k -passphrase-env DEADDROP_PASS
 ```
+
+## Server (API only)
+
+```bash
+./bin/dead-drop serve -addr :8080 -data ./data -store sqlite
+
+# create (ciphertext only — encrypt client-side first)
+curl -sS -X POST http://127.0.0.1:8080/api/v1/secrets \
+  -H 'Content-Type: application/octet-stream' \
+  -H 'X-Seal-TTL: 24h' \
+  -H 'X-Seal-Burn: 1' \
+  --data-binary @secret.seal
+
+# fetch (Take — burn-after-read consumes on first GET)
+curl -sS http://127.0.0.1:8080/api/v1/secrets/<id> -o secret.seal
+```
+
+No CORS. Fragment keys never go to the server.
 
 ## Library (PR1)
 
