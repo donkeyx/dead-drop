@@ -14,7 +14,8 @@ https://your.host/s/<id>#<key>
 | **Design** | [DESIGN.md](DESIGN.md) |
 | **PR1 — SEAL blob library** | done (`blob/`) |
 | **PR2 — offline CLI** | done (`cmd/dead-drop` seal/open) |
-| Server / UI / WASM | next |
+| **PR3 — store + Take** | done (`store/` FS + SQLite) |
+| HTTP / UI / WASM | next |
 
 ## CLI (offline)
 
