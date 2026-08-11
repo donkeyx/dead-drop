@@ -16,6 +16,7 @@ https://your.host/s/<id>#<key>
 | **PR2 — offline CLI** | done (`cmd/dead-drop` seal/open) |
 | **PR3 — store + Take** | done (`store/` FS + SQLite) |
 | **PR4 — HTTP API** | done (`server/`, `dead-drop serve`) |
+| **PR5 — network put/get** | done |
 | UI / WASM | next |
 
 ## CLI (offline)
@@ -35,20 +36,22 @@ export DEADDROP_PASS='correct horse'
 ./bin/dead-drop open -in f.seal -out f -key-file k -passphrase-env DEADDROP_PASS
 ```
 
-## Server (API only)
+## Server + network CLI
 
 ```bash
 ./bin/dead-drop serve -addr :8080 -data ./data -store sqlite
 
-# create (ciphertext only — encrypt client-side first)
+# seal client-side, upload ciphertext, print share link (includes #key)
+./bin/dead-drop put -server http://127.0.0.1:8080 -in secret.txt
+
+# download + decrypt (flags before URL)
+./bin/dead-drop get -out secret.txt 'http://127.0.0.1:8080/s/ID#KEY'
+
+# or raw API (ciphertext only)
 curl -sS -X POST http://127.0.0.1:8080/api/v1/secrets \
   -H 'Content-Type: application/octet-stream' \
-  -H 'X-Seal-TTL: 24h' \
-  -H 'X-Seal-Burn: 1' \
+  -H 'X-Seal-TTL: 24h' -H 'X-Seal-Burn: 1' \
   --data-binary @secret.seal
-
-# fetch (Take — burn-after-read consumes on first GET)
-curl -sS http://127.0.0.1:8080/api/v1/secrets/<id> -o secret.seal
 ```
 
 No CORS. Fragment keys never go to the server.

@@ -301,4 +301,3 @@ func TestGetUsesTakeOnly(t *testing.T) {
 		t.Fatalf("Get was called %d times", spy.gets.Load())
 	}
 }
-
