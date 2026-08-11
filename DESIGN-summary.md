@@ -1,4 +1,4 @@
-# Design Document Summary — SealShare
+# Design Document Summary — dead-drop
 
 **Output:** `/tmp/grok-1000/grok-design-doc-08e4b6f3.md`  
 **Review:** `/tmp/grok-1000/grok-design-review-08e4b6f3.md` (22 + 4 residual issues addressed; open count 0)  
@@ -7,11 +7,11 @@
 
 ## What was produced
 
-A full systems design for a **client-side encrypted secret/file sharing** service, codenamed **SealShare** (`github.com/donkeyx/sealshare`, MIT), revised to fix format contradictions, burn races, deploy constraints, and implementer gaps.
+A full systems design for a **client-side encrypted secret/file sharing** service, codenamed **dead-drop** (`github.com/donkeyx/dead-drop`, MIT), revised to fix format contradictions, burn races, deploy constraints, and implementer gaps.
 
 ## Codename
 
-**SealShare** — client seals content before upload; operator holds ciphertext only.
+**dead-drop** — client seals content before upload; operator holds ciphertext only.
 
 ## Core design (post-review)
 
@@ -48,7 +48,7 @@ Overview, goals, architecture + Mermaid, normative blob format, sequences, REST 
 
 ## Implementation target (not done)
 
-Greenfield: `/home/david/mywork/repos/sealshare/` — design only.
+Greenfield: `/home/david/mywork/repos/dead-drop/` — design only.
 
 ## Next step
 

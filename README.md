@@ -1,15 +1,20 @@
-# SealShare
+# dead-drop
 
-Client-side encrypted secret & small-file sharing. The server only stores ciphertext; the decryption key lives in the URL fragment (`#...`), so a normal host never sees it.
+A dead drop for secrets: encrypt **before** upload, key in the URL fragment (`#...`). The server only ever sees ciphertext.
 
-**Status:** design complete, implementation starting (see [DESIGN.md](DESIGN.md)).
+**Status:** design complete — see [DESIGN.md](DESIGN.md). Implementation starting with the SEAL blob library (PR1).
 
-## Planned stack
+```
+https://your.host/s/<id>#<key>
+         ↑ server knows id     ↑ never sent to the server
+```
 
-- Go library (SEAL blob format) + CLI
-- Go **WASM** for browser crypto (same code as CLI)
-- HTMX UI chrome (not crypto)
-- MIT license
+## Stack (planned)
+
+- Go library (SEAL format) + CLI
+- Go **WASM** browser crypto (same code as CLI)
+- HTMX for UI chrome only
+- MIT
 
 ## Docs
 
@@ -17,4 +22,4 @@ Client-side encrypted secret & small-file sharing. The server only stores cipher
 
 ## License
 
-MIT (planned; LICENSE lands with the first implementation PR).
+MIT (LICENSE with first implementation PR).

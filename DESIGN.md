@@ -1,17 +1,17 @@
-# SealShare — Client-Side Encrypted Secret & File Sharing
+# dead-drop — Client-Side Encrypted Secret & File Sharing
 
 | Field | Value |
 |-------|--------|
 | **Document** | Design specification (v1) |
-| **Codename** | **SealShare** |
-| **Module** | `github.com/donkeyx/sealshare` |
+| **Codename** | **dead-drop** |
+| **Module** | `github.com/donkeyx/dead-drop` |
 | **Author** | donkeyx / David (design by Grok Build) |
 | **Date** | 2026-08-11 |
 | **Status** | Draft (revised after design review) |
 | **License (target)** | MIT |
-| **Audience** | Senior engineers implementing or reviewing SealShare |
+| **Audience** | Senior engineers implementing or reviewing dead-drop |
 
-**Codename rationale:** *SealShare* — secrets are sealed (client-side AEAD) before they leave the browser/CLI; the operator holds only opaque blobs. Short, pronounceable, MIT-friendly, works as CLI binary name (`sealshare`) and Go module path. Alternate names considered: *dead-drop* (evocative but easy to confuse with steganography/dead-letter tools), *zksend* (overclaims cryptographic zero-knowledge proofs).
+**Name rationale:** *dead-drop* — spy/ops metaphor for leaving something for someone else to collect (often once). Fits donkeyx tool style (`tcp-wait`, hyphenated, practical). Module `github.com/donkeyx/dead-drop`, binary `dead-drop`. Crypto package format remains **SEAL v1** (sealed blob). Alternates rejected: *sealshare* (too product-y), *zksend* (overclaims ZK proofs).
 
 **Product language (user-facing README and UI):** standardize on **“client-side encrypted”** and **“the operator cannot read plaintext at rest.”** Use **“zero-knowledge storage”** only with that storage qualifier. Avoid bare “ZK” badges or shorthand that imply zk-SNARK-style proofs. Internal design prose may say “ZK-style paste” once defined as above.
 
@@ -19,13 +19,13 @@
 
 ## Overview
 
-SealShare is a **self-hostable, MIT-licensed** service for sharing a short secret or small file such that **the host never sees plaintext**. Encryption and decryption run **only on the client** (Go compiled to WASM in the browser, or the same Go library via CLI). The server stores ciphertext, metadata (TTL, burn flag, size, format version), and returns a share id. The **decryption key lives exclusively in the URL fragment** (`#…`), which browsers do not send on HTTP requests. An optional **user passphrase** acts as a second factor when the full link might leak (chat logs, referrer-less copy/paste still leaks the fragment if someone has the full URL).
+dead-drop is a **self-hostable, MIT-licensed** service for sharing a short secret or small file such that **the host never sees plaintext**. Encryption and decryption run **only on the client** (Go compiled to WASM in the browser, or the same Go library via CLI). The server stores ciphertext, metadata (TTL, burn flag, size, format version), and returns a share id. The **decryption key lives exclusively in the URL fragment** (`#…`), which browsers do not send on HTTP requests. An optional **user passphrase** acts as a second factor when the full link might leak (chat logs, referrer-less copy/paste still leaks the fragment if someone has the full URL).
 
 The stack is deliberately narrow: one language (Go 1.22+) for crypto format, server, WASM, and CLI; **HTMX** for progressive server-driven UI around (not instead of) client crypto; **stdlib `net/http`** for the HTTP surface; **filesystem or SQLite** storage for v1. Defaults favor security: burn-after-read **on**, short TTLs, size caps, rate limits, long random ids.
 
 **v1 deploy shape:** **single writer process / single node** with a local data directory (see [Deployment constraints (v1)](#deployment-constraints-v1)). Horizontal replicas are unsupported until a shared Store with atomic claim exists.
 
-This document is the implementation blueprint for a **greenfield** repo at `/home/david/mywork/repos/sealshare/` (or equivalent). No code is implemented yet.
+This document is the implementation blueprint for a **greenfield** repo at `/home/david/mywork/repos/dead-drop/` (or equivalent). No code is implemented yet.
 
 ---
 
@@ -54,7 +54,7 @@ People need to pass API tokens, passwords, private keys, and small config files 
 
 ### Non-marketing honesty
 
-SealShare does **not** protect against a malicious or compromised **origin that serves the WASM/JS**. Anyone who can alter hosted scripts can exfiltrate keys or plaintext at encrypt/decrypt time. XSS, malicious browser extensions, and full-link leakage remain real. The design documents these limits instead of promising “unbreakable” secrecy.
+dead-drop does **not** protect against a malicious or compromised **origin that serves the WASM/JS**. Anyone who can alter hosted scripts can exfiltrate keys or plaintext at encrypt/decrypt time. XSS, malicious browser extensions, and full-link leakage remain real. The design documents these limits instead of promising “unbreakable” secrecy.
 
 ---
 
@@ -70,7 +70,7 @@ SealShare does **not** protect against a malicious or compromised **origin that 
 6. **Self-hostable** single binary + data directory; MIT license; Docker image later.
 7. **Secure defaults:** burn-after-read on, TTL 24h (max 7d), rate limits, 128-bit ids, 256-bit keys.
 8. **Honest threat model** and CSP/hardening so the browser surface is as tight as practical.
-9. **Library-first layout** (`import "github.com/donkeyx/sealshare/..."`) plus `cmd/sealshare` for server and CLI subcommands.
+9. **Library-first layout** (`import "github.com/donkeyx/dead-drop/..."`) plus `cmd/dead-drop` for server and CLI subcommands.
 10. **Atomic `Take` delivery** so concurrent GETs cannot double-fetch burn-after-read ciphertext (no Get-then-Delete).
 
 ### Non-Goals (v1)
@@ -97,11 +97,11 @@ SealShare does **not** protect against a malicious or compromised **origin that 
 ```mermaid
 flowchart TB
   subgraph clients [Clients]
-    Browser["Browser<br/>HTMX + thin JS + sealshare.wasm"]
-    CLI["CLI sealshare put/get"]
+    Browser["Browser<br/>HTMX + thin JS + dead-drop.wasm"]
+    CLI["CLI dead-drop put/get"]
   end
 
-  subgraph server [SealShare server - Go single writer]
+  subgraph server [dead-drop server - Go single writer]
     HTTP["net/http API + HTML"]
     Store["Store interface<br/>Take (atomic delivery)"]
     GC["Expiry GC"]
@@ -128,8 +128,8 @@ flowchart TB
 ### Component layout (repo)
 
 ```
-sealshare/
-  go.mod                          # module github.com/donkeyx/sealshare
+dead-drop/
+  go.mod                          # module github.com/donkeyx/dead-drop
   LICENSE                         # MIT
   README.md
   blob/                           # versioned ciphertext format + encrypt/decrypt
@@ -137,7 +137,7 @@ sealshare/
   store/                          # Store interface + fs + sqlite implementations
   server/                         # HTTP handlers, middleware, HTML templates
   web/                            # static: wasm, wasm_exec.js, CSS, minimal JS glue
-  cmd/sealshare/
+  cmd/dead-drop/
     main.go                       # subcommands: serve, put, get, version
   internal/
     ratelimit/
@@ -317,10 +317,10 @@ Tests: flip each framing field independently → `Open` fails.
 Domain separation string (sole v1 AEAD info label):
 
 ```text
-info = []byte("sealshare-v1/aead")
+info = []byte("deaddrop-v1/aead")
 ```
 
-If a future key type is needed (e.g. separate MAC key), use a new info string such as `"sealshare-v1/…"` and/or a format version bump — never overload this label silently.
+If a future key type is needed (e.g. separate MAC key), use a new info string such as `"deaddrop-v1/…"` and/or a format version bump — never overload this label silently.
 
 ```go
 // Normative key schedule (implement byte-identical to this).
@@ -404,7 +404,7 @@ sequenceDiagram
 
   U->>B: Enter secret/file, options (TTL, burn, passphrase)
   B->>B: masterKey = CSPRNG(32)
-  B->>B: SealShare.Encrypt(plaintext, masterKey, opts) → blob
+  B->>B: dead-drop.Encrypt(plaintext, masterKey, opts) → blob
   B->>S: POST /api/v1/secrets (blob, ttl, burn) NO key
   S->>S: Validate magic, version, size, TTL ≤ max
   S->>S: id = CSPRNG base64url (retry on collision)
@@ -528,7 +528,7 @@ $data_dir/
 | Multi-read `Take` | Do **not** use quarantine; read live files in place. |
 | Process crash after rename, before unlink | Live id is gone (burn semantics preserved). Orphan remains under `quarantine/`. |
 | **Startup** | Delete all leftover `quarantine/*` — **do not restore** to live ids (would re-enable a second Take of a burned secret). |
-| Metrics | Optional `sealshare_quarantine_reaped_total` on startup reap |
+| Metrics | Optional `deaddrop_quarantine_reaped_total` on startup reap |
 
 #### Burn (explicit)
 
@@ -771,7 +771,7 @@ $data_dir/
 
 #### v1b — SQLite
 
-Single file `sealshare.db`:
+Single file `dead-drop.db`:
 
 ```sql
 CREATE TABLE secrets (
@@ -798,8 +798,8 @@ Same `Store` interface; `Take` must preserve atomic burn-vs-multi-read semantics
 
 | Constraint | Rule |
 |------------|------|
-| **Writer cardinality** | **Exactly one** SealShare process may open the data directory for write |
-| **SQLite** | `SEALSHARE_STORE=sqlite` with **replica count > 1 is unsupported** |
+| **Writer cardinality** | **Exactly one** dead-drop process may open the data directory for write |
+| **SQLite** | `DEADDROP_STORE=sqlite` with **replica count > 1 is unsupported** |
 | **Filesystem store** | Local disk (or single-writer network FS with documented risk); no multi-node claim safety |
 | **Horizontal scale** | Requires post-v1 shared Store with atomic claim (S3+conditional, Postgres, etc.) |
 | **Process lock** | On startup, acquire exclusive file lock on `$DATA/.lock` (e.g. `flock`); fail fast if held |
@@ -827,10 +827,10 @@ wasm:
 	mkdir -p web/static
 	cp "$$(go env GOROOT)/lib/wasm/wasm_exec.js" web/static/
 	GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" \
-	  -o web/static/sealshare.wasm ./cmd/sealshare-wasm
+	  -o web/static/dead-drop.wasm ./cmd/dead-drop-wasm
 ```
 
-`cmd/sealshare-wasm` imports `blob` only (not `server`/`store`).
+`cmd/dead-drop-wasm` imports `blob` only (not `server`/`store`).
 
 #### JS API surface
 
@@ -850,16 +850,16 @@ WASM glue copies passphrase from JS string into `[]byte` for `blob.Open`/`Seal` 
 #### Loading sequence (reveal page)
 
 1. HTML from server with strict CSP.  
-2. Load `wasm_exec.js` + `sealshare.wasm` from **same origin**.  
-3. Instantiate WASM; wait until `sealshare.encrypt` is defined.  
+2. Load `wasm_exec.js` + `dead-drop.wasm` from **same origin**.  
+3. Instantiate WASM; wait until `deaddrop.encrypt` is defined.  
 4. Create/reveal logic.
 
 #### Size and memory budgets
 
 | Artifact / concern | Target | Hard max |
 |--------------------|--------|----------|
-| `sealshare.wasm` (gzip) | ≤ **1.5 MiB** | 3 MiB |
-| `sealshare.wasm` (raw) | ≤ **4 MiB** | 8 MiB |
+| `dead-drop.wasm` (gzip) | ≤ **1.5 MiB** | 3 MiB |
+| `dead-drop.wasm` (raw) | ≤ **4 MiB** | 8 MiB |
 | Glue JS (non-wasm_exec) | ≤ **15 KiB** | 40 KiB |
 | **Runtime RAM** (passphrase path, mobile) | Peak design target **≤ ~48 MiB** Argon2+buffers | See Argon2 32 MiB default |
 
@@ -901,12 +901,12 @@ HTMX handles non-crypto UI chrome only.
 ### CLI (parity with WASM)
 
 ```text
-sealshare put [-] [--passphrase-env=VAR] [--ttl=24h] [--burn=true] [--file path]
+dead-drop put [-] [--passphrase-env=VAR] [--ttl=24h] [--burn=true] [--file path]
               [--server https://host] [--out-link] [--strong]
-sealshare get URL_OR_ID [--key=] [--passphrase-env=VAR] [--server] [-o file]
-sealshare seal -in f -out f.seal [--strong]
-sealshare open -in f.seal -out f
-sealshare serve --addr :8080 --data /var/lib/sealshare
+dead-drop get URL_OR_ID [--key=] [--passphrase-env=VAR] [--server] [-o file]
+dead-drop seal -in f -out f.seal [--strong]
+dead-drop open -in f.seal -out f
+dead-drop serve --addr :8080 --data /var/lib/dead-drop
 ```
 
 - Passphrase via TTY prompt or env (never argv).  
@@ -987,23 +987,23 @@ func ParseFragmentKey(hash string) ([]byte, error)
 Server config (env/flags):
 
 ```text
-SEALSHARE_ADDR=:8080
-SEALSHARE_DATA=/var/lib/sealshare
-SEALSHARE_MAX_BYTES=16777216
-SEALSHARE_DEFAULT_TTL=24h
-SEALSHARE_MAX_TTL=168h
-SEALSHARE_STORE=sqlite   # or fs
-SEALSHARE_TRUST_PROXY=false
-SEALSHARE_TRUSTED_PROXIES=   # CIDR list, required non-empty if TRUST_PROXY=true
-SEALSHARE_LOG_IDS=truncate   # truncate (default) | full
+DEADDROP_ADDR=:8080
+DEADDROP_DATA=/var/lib/dead-drop
+DEADDROP_MAX_BYTES=16777216
+DEADDROP_DEFAULT_TTL=24h
+DEADDROP_MAX_TTL=168h
+DEADDROP_STORE=sqlite   # or fs
+DEADDROP_TRUST_PROXY=false
+DEADDROP_TRUSTED_PROXIES=   # CIDR list, required non-empty if TRUST_PROXY=true
+DEADDROP_LOG_IDS=truncate   # truncate (default) | full
 ```
 
 ### Reverse proxy and client IP
 
 | Setting | Behavior |
 |---------|----------|
-| `SEALSHARE_TRUST_PROXY=false` (**default**) | Rate limit and logs use the direct TCP peer address only. Ignore `X-Forwarded-For` / `X-Real-IP`. |
-| `SEALSHARE_TRUST_PROXY=true` | Honor `X-Forwarded-For` **only if** `SEALSHARE_TRUSTED_PROXIES` is a non-empty CIDR list and the immediate peer is in that list. Otherwise refuse to start or ignore forwarded headers (fail closed). |
+| `DEADDROP_TRUST_PROXY=false` (**default**) | Rate limit and logs use the direct TCP peer address only. Ignore `X-Forwarded-For` / `X-Real-IP`. |
+| `DEADDROP_TRUST_PROXY=true` | Honor `X-Forwarded-For` **only if** `DEADDROP_TRUSTED_PROXIES` is a non-empty CIDR list and the immediate peer is in that list. Otherwise refuse to start or ignore forwarded headers (fail closed). |
 
 **Failure modes to document:**
 
@@ -1137,7 +1137,7 @@ Backup: SQLite file or `blobs/` tree; ciphertext-only (metadata still sensitive)
 
 | Field | Policy |
 |-------|--------|
-| `id` | **Default `truncate`:** first 2 + last 2 base64url chars (e.g. `3H…nX`). Full id only when `SEALSHARE_LOG_IDS=full` (self-host debug). Public demos MUST use truncate. |
+| `id` | **Default `truncate`:** first 2 + last 2 base64url chars (e.g. `3H…nX`). Full id only when `DEADDROP_LOG_IDS=full` (self-host debug). Public demos MUST use truncate. |
 | Allowed | `request_id`, `method`, route template, truncated/full id per flag, `status`, `bytes_in`/`out`, `duration_ms`, `burn`, `error_class` |
 | Never | plaintext, fragment, passphrase, raw blob, full `Referer` |
 
@@ -1145,14 +1145,14 @@ Backup: SQLite file or `blobs/` tree; ciphertext-only (metadata still sensitive)
 
 | Metric | Type | Labels |
 |--------|------|--------|
-| `sealshare_secrets_created_total` | counter | (none with id) |
-| `sealshare_secrets_fetched_total` | counter | `result=ok\|not_found\|expired` |
-| `sealshare_secrets_burned_total` | counter | |
-| `sealshare_quarantine_reaped_total` | counter | optional, startup FS reap |
-| `sealshare_secrets_expired_total` | counter | |
-| `sealshare_store_bytes` | gauge | |
-| `sealshare_http_requests_total` | counter | `code`, `route` |
-| `sealshare_http_request_duration_seconds` | histogram | `route` |
+| `deaddrop_secrets_created_total` | counter | (none with id) |
+| `deaddrop_secrets_fetched_total` | counter | `result=ok\|not_found\|expired` |
+| `deaddrop_secrets_burned_total` | counter | |
+| `deaddrop_quarantine_reaped_total` | counter | optional, startup FS reap |
+| `deaddrop_secrets_expired_total` | counter | |
+| `deaddrop_store_bytes` | gauge | |
+| `deaddrop_http_requests_total` | counter | `code`, `route` |
+| `deaddrop_http_request_duration_seconds` | histogram | `route` |
 
 **Never** label metrics with secret id or IP.
 
@@ -1186,7 +1186,7 @@ Optional later; avoid shipping full ids to external SaaS without review.
 
 | # | Decision | Rationale |
 |---|----------|-----------|
-| 1 | **Codename SealShare**, module `github.com/donkeyx/sealshare` | Clear seal/share metaphor; donkeyx-friendly; MIT |
+| 1 | **Name dead-drop**, module `github.com/donkeyx/dead-drop` | Ops/spy dead-drop metaphor; matches tcp-wait style; MIT |
 | 2 | **MIT license** | Aligns with tcp-wait |
 | 3 | **Client-side XChaCha20-Poly1305** | Random-nonce AEAD; pure Go; WASM/CLI parity |
 | 4 | **256-bit key in URL fragment only** | Avoids server logs via normal browsers |
@@ -1224,7 +1224,7 @@ Optional later; avoid shipping full ids to external SaaS without review.
 | 3 | Ciphertext size padding? | Defer | Complexity vs gain |
 | 4 | Multi-recipient DEK wraps? | Out of scope v1 | — |
 | 5 | Public demo max 1 MiB vs 16 MiB | 1 MiB public | Deploy profiles |
-| 6 | Single binary name `sealshare` vs split | Single binary + subcommands | Taste |
+| 6 | Single binary name `dead-drop` vs split | Single binary + subcommands | Taste |
 | 7 | Hash clear default (already decided best-effort) | Default clear | Optional UX research only |
 | 8 | SQLite pure Go vs cgo | pure Go first | Perf under load |
 
@@ -1234,7 +1234,7 @@ Non-blocking for PR1; Key Decisions apply until overturned.
 
 ## PR Plan
 
-Incremental, each PR independently reviewable and mergeable. Repo root: `/home/david/mywork/repos/sealshare/`.
+Incremental, each PR independently reviewable and mergeable. Repo root: `/home/david/mywork/repos/dead-drop/`.
 
 ### PR 1 — Repository skeleton & blob format library
 
@@ -1252,8 +1252,8 @@ Incremental, each PR independently reviewable and mergeable. Repo root: `/home/d
 
 ### PR 2 — CLI offline seal/open
 
-- **Title:** `feat(cli): sealshare seal/open offline commands`
-- **Files/components:** `cmd/sealshare/*` seal/open, README CLI
+- **Title:** `feat(cli): dead-drop seal/open offline commands`
+- **Files/components:** `cmd/dead-drop/*` seal/open, README CLI
 - **Dependencies:** PR 1
 - **Acceptance:** CLI opens PR1 golden vectors byte-identical.
 - **Description:** Air-gapped parity; passphrase via prompt/env.
@@ -1273,7 +1273,7 @@ Incremental, each PR independently reviewable and mergeable. Repo root: `/home/d
 ### PR 4 — HTTP API server (no UI) **with rate limits**
 
 - **Title:** `feat(server): HTTP API with limits, timeouts, Take delivery`
-- **Files/components:** `server/`, `internal/ratelimit/` (**working** IP limits), `internal/config/`, `cmd/sealshare/serve.go`, httptest tests
+- **Files/components:** `server/`, `internal/ratelimit/` (**working** IP limits), `internal/config/`, `cmd/dead-drop/serve.go`, httptest tests
 - **Dependencies:** PR 1 (magic validation optional), PR 3
 - **Acceptance:**
   - GET handler calls **`Take` only** (code review checklist / no Get-then-Delete).
@@ -1286,15 +1286,15 @@ Incremental, each PR independently reviewable and mergeable. Repo root: `/home/d
 
 ### PR 5 — CLI network put/get
 
-- **Title:** `feat(cli): put/get against SealShare server`
+- **Title:** `feat(cli): put/get against dead-drop server`
 - **Files/components:** put.go, get.go, loopback integration test
 - **Dependencies:** PR 2, PR 4
 - **Description:** Full round-trip; link = `--server` + path + local fragment. Note: `v0.1.0` can ship if PR5 slips only if API+UI work; prefer merge before tag.
 
 ### PR 6 — WASM build + JS glue + vector interop
 
-- **Title:** `feat(wasm): sealshare.wasm encrypt/decrypt JS API`
-- **Files/components:** `cmd/sealshare-wasm/`, static wasm, size check, harness
+- **Title:** `feat(wasm): dead-drop.wasm encrypt/decrypt JS API`
+- **Files/components:** `cmd/dead-drop-wasm/`, static wasm, size check, harness
 - **Dependencies:** PR 1
 - **Acceptance:**
   - CI runs WASM encrypt/decrypt against **same PR1 testdata vectors**.
@@ -1428,7 +1428,7 @@ flags = 0x00
 header = (empty)
 aad = SEAL || 01 || 00 || 00 00
 aeadKey = HKDF-SHA256-Extract-Expand(
-  ikm=masterKey, salt=zeros(32), info="sealshare-v1/aead", L=32)
+  ikm=masterKey, salt=zeros(32), info="deaddrop-v1/aead", L=32)
 meta_json = {"v":1,"ct":"…","name":"…"}   # compact; key order v,ct,name only
 plaintext = meta_len || meta_json || raw_payload
 ```
@@ -1446,7 +1446,7 @@ header =
 aad = SEAL || 01 || 01 || 00 1A || header
 passKey = argon2.IDKey(pass, salt, 2, 32768, 1, 32)
 aeadKey = HKDF-SHA256-Extract-Expand(
-  ikm=masterKey, salt=passKey, info="sealshare-v1/aead", L=32)
+  ikm=masterKey, salt=passKey, info="deaddrop-v1/aead", L=32)
 ```
 
 ### Hex smoke (structure only — replace with real golden after PR1)
