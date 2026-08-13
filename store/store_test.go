@@ -41,7 +41,7 @@ func TestPostgresTakeBurnRace(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	if _, err := s.db.Exec(`TRUNCATE secrets`); err != nil {
+	if _, err := s.db.Exec(`TRUNCATE deaddrop.secrets`); err != nil {
 		t.Fatal(err)
 	}
 	runTakeBurnRace(t, s)
