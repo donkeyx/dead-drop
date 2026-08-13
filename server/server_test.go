@@ -169,6 +169,14 @@ func TestCreateJSONAndGetAltJSON(t *testing.T) {
 	if got["blob"] == nil {
 		t.Fatal(got)
 	}
+	encoded, ok := got["blob"].(string)
+	if !ok {
+		t.Fatalf("blob type = %T", got["blob"])
+	}
+	decoded, err := blob.DecodeB64URL(encoded)
+	if err != nil || !bytes.Equal(decoded, pkg) {
+		t.Fatalf("alt=json blob did not round-trip")
+	}
 }
 
 func TestBadBlob(t *testing.T) {

@@ -13,3 +13,8 @@ func b64urlDecode(s string) ([]byte, error) {
 	}
 	return base64.URLEncoding.DecodeString(s)
 }
+
+// DecodeB64URL decodes raw or padded URL-safe base64 bytes.
+func DecodeB64URL(s string) ([]byte, error) {
+	return b64urlDecode(s)
+}
