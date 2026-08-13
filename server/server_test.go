@@ -271,6 +271,9 @@ func TestUIHeadersAndShell(t *testing.T) {
 	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/ui.js")) {
 		t.Fatal("UI shell does not load the browser controller")
 	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("Maximum 16 MiB")) {
+		t.Fatal("UI shell does not document its client-side size limit")
+	}
 	for _, header := range []string{"Content-Security-Policy", "Referrer-Policy", "Permissions-Policy", "X-Frame-Options"} {
 		if rr.Header().Get(header) == "" {
 			t.Fatalf("missing %s", header)
