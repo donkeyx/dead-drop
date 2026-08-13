@@ -103,7 +103,7 @@ func cmdGet(args []string) int {
 			Blob string `json:"blob"`
 		}
 		if err := json.Unmarshal(body, &wrap); err == nil && wrap.Blob != "" {
-			if b, err := blob.DecodeKeyB64URL(wrap.Blob); err == nil {
+			if b, err := blob.DecodeB64URL(wrap.Blob); err == nil {
 				pkg = b
 			}
 		}
