@@ -73,3 +73,31 @@ jobs:
           test -f web/static/dead-drop.wasm
           size=$(gzip -c web/static/dead-drop.wasm | wc -c)
           test "$size" -le 1572864
+
+  browser:
+    name: Browser UI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build WASM assets
+        run: make wasm
+
+      - name: Install browser test dependencies
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - name: Run browser tests
+        run: npm run test:browser
