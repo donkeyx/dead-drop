@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -263,8 +265,11 @@ func TestUIHeadersAndShell(t *testing.T) {
 	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("Client-side encrypted")) {
 		t.Fatalf("home response: %d %s", rr.Code, rr.Body.String())
 	}
-	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css")) {
-		t.Fatal("UI shell does not load the skin")
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=1")) {
+		t.Fatal("UI shell does not load the cache-busted skin")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/mark.jpg?v=1")) {
+		t.Fatal("UI shell does not load the cache-busted mark")
 	}
 	for _, forbidden := range []string{"method=\"post\"", "type=\"hidden\""} {
 		if bytes.Contains(rr.Body.Bytes(), []byte(forbidden)) {
@@ -290,6 +295,34 @@ func TestUIHeadersAndShell(t *testing.T) {
 	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/s/example", nil))
 	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("open-drop")) {
 		t.Fatalf("reveal response: %d %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestStaticAssetCacheHeaders(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "skin.css"), []byte("body{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	srv, _ := testServer(t)
+	srv.cfg.StaticDir = dir
+	h := srv.Handler()
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/static/skin.css", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("css: %d", rr.Code)
+	}
+	if got := rr.Header().Get("Cache-Control"); got != "public, max-age=300" {
+		t.Fatalf("css cache: %q", got)
+	}
+
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/static/missing.css", nil))
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("missing: %d", rr.Code)
+	}
+	if got := rr.Header().Get("Cache-Control"); got != "no-store" {
+		t.Fatalf("missing cache: %q", got)
 	}
 }
 
