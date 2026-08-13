@@ -1,0 +1,9 @@
+.git
+.github
+bin
+node_modules
+test-results
+playwright-report
+tmp
+*.seal
+*.key

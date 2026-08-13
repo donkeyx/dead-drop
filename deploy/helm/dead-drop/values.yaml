@@ -1,0 +1,68 @@
+image:
+  repository: ghcr.io/donkeyx/dead-drop
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+service:
+  type: ClusterIP
+  port: 8080
+
+database:
+  existingSecret: ""
+  existingSecretKey: database-url
+
+env:
+  store: postgres
+  maxBytes: "16777216"
+  defaultTTL: 24h
+  maxTTL: 168h
+  minTTL: 5m
+  trustProxy: "false"
+  trustedProxies: ""
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: dead-drop.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop: [ALL]
+
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

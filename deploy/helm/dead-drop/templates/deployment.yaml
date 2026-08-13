@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dead-drop.fullname" . }}
+  labels:
+    {{- include "dead-drop.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "dead-drop.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "dead-drop.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: dead-drop
+          image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["serve", "-addr", ":8080", "-static", "/app/web/static"]
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: DEADDROP_STORE
+              value: {{ .Values.env.store | quote }}
+            - name: DEADDROP_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "database.existingSecret is required" .Values.database.existingSecret }}
+                  key: {{ .Values.database.existingSecretKey }}
+            - name: DEADDROP_MAX_BYTES
+              value: {{ .Values.env.maxBytes | quote }}
+            - name: DEADDROP_DEFAULT_TTL
+              value: {{ .Values.env.defaultTTL | quote }}
+            - name: DEADDROP_MAX_TTL
+              value: {{ .Values.env.maxTTL | quote }}
+            - name: DEADDROP_MIN_TTL
+              value: {{ .Values.env.minTTL | quote }}
+            - name: DEADDROP_TRUST_PROXY
+              value: {{ .Values.env.trustProxy | quote }}
+            - name: DEADDROP_TRUSTED_PROXIES
+              value: {{ .Values.env.trustedProxies | quote }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}

@@ -101,6 +101,15 @@ SQLite and filesystem storage are single-writer backends for one replica with on
 
 The current rate limiter is in-memory and therefore per-pod. PostgreSQL makes secret storage safe across replicas, but shared/global rate limiting is a separate deployment-hardening task before treating HPA limits as fleet-wide limits.
 
+## Kubernetes / Helm
+
+The chart at `deploy/helm/dead-drop` deploys stateless replicas backed by an external PostgreSQL database. It includes readiness/liveness probes, a PodDisruptionBudget, optional HPA, Ingress support, non-root security settings, and a Secret reference for `DEADDROP_DATABASE_URL`.
+
+```bash
+helm upgrade --install dead-drop ./deploy/helm/dead-drop \
+  --set database.existingSecret=dead-drop-db
+```
+
 ## Library (PR1)
 
 ```go
