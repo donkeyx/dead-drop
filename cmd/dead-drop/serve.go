@@ -21,6 +21,7 @@ func cmdServe(args []string) int {
 	fs.SetOutput(os.Stderr)
 	addr := fs.String("addr", "", "listen address (default DEADDROP_ADDR or :8080)")
 	data := fs.String("data", "", "data directory (default DEADDROP_DATA or ./data)")
+	static := fs.String("static", "", "static assets directory (default DEADDROP_STATIC or ./web/static)")
 	storeKind := fs.String("store", "", "sqlite|fs (default DEADDROP_STORE or sqlite)")
 	if err := fs.Parse(args); err != nil {
 		return exitUsage
@@ -36,6 +37,9 @@ func cmdServe(args []string) int {
 	}
 	if *data != "" {
 		cfg.DataDir = *data
+	}
+	if *static != "" {
+		cfg.StaticDir = *static
 	}
 	if *storeKind != "" {
 		cfg.Store = *storeKind

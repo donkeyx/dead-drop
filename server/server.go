@@ -46,6 +46,9 @@ func New(cfg config.Config, st store.Store, log *slog.Logger) *Server {
 // Handler returns the root mux.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", s.handleHome)
+	mux.HandleFunc("GET /s/{id}", s.handleReveal)
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(s.cfg.StaticDir))))
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 	mux.HandleFunc("GET /readyz", s.handleReadyz)
 	mux.HandleFunc("POST /api/v1/secrets", s.handleCreate)
@@ -57,9 +60,79 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// No CORS by design.
 		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'")
+		w.Header().Set("Referrer-Policy", "no-referrer")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		w.Header().Set("X-Frame-Options", "DENY")
 		next.ServeHTTP(w, r)
 	})
 }
+
+func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+	s.writeShell(w)
+}
+
+func (s *Server) handleReveal(w http.ResponseWriter, r *http.Request) {
+	s.writeShell(w)
+}
+
+func (s *Server) writeShell(w http.ResponseWriter) {
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = io.WriteString(w, uiShell)
+}
+
+const uiShell = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>dead-drop</title>
+  <style>
+    :root { color-scheme: dark; font: 16px/1.5 system-ui, sans-serif; background: #101418; color: #e7edf2; }
+    body { max-width: 50rem; margin: 0 auto; padding: 2rem 1rem; }
+    h1 { letter-spacing: .04em; } main { display: grid; gap: 1.5rem; }
+    section { border: 1px solid #33404a; border-radius: .75rem; padding: 1rem; background: #171e24; }
+    label { display: block; margin: .75rem 0 .25rem; color: #b9c6d0; }
+    textarea, input { box-sizing: border-box; width: 100%; padding: .65rem; border: 1px solid #52616d; border-radius: .4rem; background: #0e1317; color: inherit; }
+    textarea { min-height: 8rem; resize: vertical; } button { margin-top: 1rem; padding: .65rem 1rem; cursor: pointer; }
+    output { display: block; margin-top: 1rem; overflow-wrap: anywhere; } .warning { color: #ffd479; }
+    [hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <header><h1>dead-drop</h1><p>Client-side encrypted sharing. The server stores ciphertext only.</p></header>
+  <main>
+    <section id="create-panel">
+      <h2>Leave a drop</h2>
+      <form id="create-form">
+        <label for="secret">Secret or small file</label>
+        <textarea id="secret" name="secret" autocomplete="off" required></textarea>
+        <label for="passphrase">Optional passphrase</label>
+        <input id="passphrase" name="passphrase" type="password" autocomplete="off">
+        <label><input id="burn" type="checkbox" checked> Burn after first download</label>
+        <button type="submit">Create encrypted link</button>
+      </form>
+      <output id="create-result" aria-live="polite"></output>
+    </section>
+    <section id="reveal-panel" hidden>
+      <h2>Open drop</h2>
+      <p class="warning">The first download consumes burn-after-read drops, even if decryption fails.</p>
+      <label for="reveal-passphrase">Passphrase, if required</label>
+      <input id="reveal-passphrase" type="password" autocomplete="off">
+      <button id="open-drop" type="button">Open encrypted drop</button>
+      <output id="reveal-result" aria-live="polite"></output>
+    </section>
+  </main>
+  <script src="/static/wasm_exec.js"></script>
+  <script src="/static/deaddrop.js"></script>
+  <script src="/static/ui.js"></script>
+</body>
+</html>`
 
 func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")

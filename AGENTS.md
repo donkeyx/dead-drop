@@ -28,5 +28,5 @@
 ## Current Scope
 
 - PR1-PR6 are complete: SEAL library, offline CLI, FS/SQLite stores, HTTP API, network put/get, and WASM crypto/vector harness.
-- PR7 is the next planned feature: HTMX UI around the existing client-side WASM crypto. HTMX must never submit plaintext, fragment keys, or passphrases.
+- PR7 is the browser UI slice: server-rendered create/reveal shells plus same-origin static JS around the existing client-side WASM crypto. If HTMX is added later for non-sensitive chrome, it must never submit plaintext, fragment keys, or passphrases.
 - The design and README are the source of product/security constraints; preserve their wording around “client-side encrypted” and avoid unqualified “zero-knowledge” claims.

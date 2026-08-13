@@ -18,7 +18,7 @@ https://your.host/s/<id>#<key>
 | **PR4 — HTTP API** | done (`server/`, `dead-drop serve`) |
 | **PR5 — network put/get** | done |
 | **PR6 — WASM crypto** | done (`make wasm` / `make wasm-test`) |
-| HTMX UI | next (PR7) |
+| **PR7 — browser UI shell** | in progress (create/reveal pages, same-origin JS/WASM) |
 
 ## CLI (offline)
 
@@ -77,6 +77,18 @@ make wasm-test   # Node harness opens PR1 golden vectors
 ```
 
 Gzip size target ≤ 1.5 MiB (currently ~1.0 MiB).
+
+## Browser UI
+
+The server serves the create shell at `/` and the reveal shell at `/s/{id}`.
+Build the generated WASM assets before starting the server:
+
+```bash
+make wasm
+./bin/dead-drop serve -addr :8080 -data ./data -static ./web/static
+```
+
+The browser encrypts before `POST /api/v1/secrets`; the fragment key is never sent to the server. Reveal pages clear the fragment from the visible address bar on first use, but burn-after-read still consumes the drop when the ciphertext is fetched.
 
 ## Library (PR1)
 
