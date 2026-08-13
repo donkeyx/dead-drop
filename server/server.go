@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -48,7 +49,8 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", s.handleHome)
 	mux.HandleFunc("GET /s/{id}", s.handleReveal)
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(s.cfg.StaticDir))))
+	mux.Handle("GET /static/", http.StripPrefix("/static/", staticFiles(http.Dir(s.cfg.StaticDir))))
+	mux.HandleFunc("GET /favicon.ico", s.handleFavicon)
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 	mux.HandleFunc("GET /readyz", s.handleReadyz)
 	mux.HandleFunc("POST /api/v1/secrets", s.handleCreate)
@@ -80,6 +82,46 @@ func (s *Server) handleReveal(w http.ResponseWriter, r *http.Request) {
 	s.writeShell(w)
 }
 
+func (s *Server) handleFavicon(w http.ResponseWriter, r *http.Request) {
+	if s.cfg.StaticDir == "" {
+		http.NotFound(w, r)
+		return
+	}
+	http.ServeFile(w, r, filepath.Join(s.cfg.StaticDir, "favicon.ico"))
+}
+
+func staticFiles(root http.FileSystem) http.Handler {
+	fs := http.FileServer(root)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fs.ServeHTTP(&staticCacheWriter{ResponseWriter: w}, r)
+	})
+}
+
+// staticCacheWriter caches successful assets briefly and never caches 404s.
+type staticCacheWriter struct {
+	http.ResponseWriter
+	wrote bool
+}
+
+func (w *staticCacheWriter) WriteHeader(code int) {
+	if !w.wrote {
+		if code == http.StatusOK {
+			w.Header().Set("Cache-Control", "public, max-age=300")
+		} else {
+			w.Header().Set("Cache-Control", "no-store")
+		}
+		w.wrote = true
+	}
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *staticCacheWriter) Write(p []byte) (int, error) {
+	if !w.wrote {
+		w.WriteHeader(http.StatusOK)
+	}
+	return w.ResponseWriter.Write(p)
+}
+
 func (s *Server) writeShell(w http.ResponseWriter) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -92,13 +134,15 @@ const uiShell = `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>dead-drop</title>
-  <link rel="icon" href="/static/mark.jpg">
-  <link rel="stylesheet" href="/static/skin.css">
+  <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
+  <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
+  <link rel="stylesheet" href="/static/skin.css?v=1">
 </head>
 <body>
   <div class="wrap">
     <header class="brand">
-      <img src="/static/mark.jpg" width="88" height="88" alt="">
+      <img src="/static/mark.jpg?v=1" width="88" height="88" alt="">
       <div>
         <h1>dead-drop</h1>
         <p class="tag">Client-side encrypted. The server only ever sees ciphertext.</p>
