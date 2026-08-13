@@ -92,47 +92,46 @@ const uiShell = `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>dead-drop</title>
-  <style>
-    :root { color-scheme: dark; font: 16px/1.5 system-ui, sans-serif; background: #101418; color: #e7edf2; }
-    body { max-width: 50rem; margin: 0 auto; padding: 2rem 1rem; }
-    h1 { letter-spacing: .04em; } main { display: grid; gap: 1.5rem; }
-    section { border: 1px solid #33404a; border-radius: .75rem; padding: 1rem; background: #171e24; }
-    label { display: block; margin: .75rem 0 .25rem; color: #b9c6d0; }
-    textarea, input { box-sizing: border-box; width: 100%; padding: .65rem; border: 1px solid #52616d; border-radius: .4rem; background: #0e1317; color: inherit; }
-    textarea { min-height: 8rem; resize: vertical; } button { margin-top: 1rem; padding: .65rem 1rem; cursor: pointer; }
-    output { display: block; margin-top: 1rem; overflow-wrap: anywhere; } .warning { color: #ffd479; }
-    .link-row { display: flex; gap: .5rem; align-items: stretch; } .link-row input { min-width: 0; }
-    .muted { color: #9eabb5; font-size: .9rem; }
-    [hidden] { display: none; }
-  </style>
+  <link rel="icon" href="/static/mark.jpg">
+  <link rel="stylesheet" href="/static/skin.css">
 </head>
 <body>
-  <header><h1>dead-drop</h1><p>Client-side encrypted sharing. The server stores ciphertext only.</p></header>
-  <main>
-    <section id="create-panel">
-      <h2>Leave a drop</h2>
-      <form id="create-form">
-        <label for="secret">Secret or small file</label>
-        <textarea id="secret" name="secret" autocomplete="off" maxlength="16777216"></textarea>
-        <label for="file">Or choose a small file</label>
-        <input id="file" type="file" accept="*/*">
-        <p class="muted">The file is read and encrypted in this browser. It is never uploaded as plaintext. Maximum 16 MiB.</p>
-        <label for="passphrase">Optional passphrase</label>
-        <input id="passphrase" name="passphrase" type="password" autocomplete="off">
-        <label><input id="burn" type="checkbox" checked> Burn after first download</label>
-        <button type="submit">Create encrypted link</button>
-      </form>
-      <output id="create-result" aria-live="polite"></output>
-    </section>
-    <section id="reveal-panel" hidden>
-      <h2>Open drop</h2>
-      <p class="warning">The first download consumes burn-after-read drops, even if decryption fails.</p>
-      <label for="reveal-passphrase">Passphrase, if required</label>
-      <input id="reveal-passphrase" type="password" autocomplete="off">
-      <button id="open-drop" type="button">Open encrypted drop</button>
-      <output id="reveal-result" aria-live="polite"></output>
-    </section>
-  </main>
+  <div class="wrap">
+    <header class="brand">
+      <img src="/static/mark.jpg" width="88" height="88" alt="">
+      <div>
+        <h1>dead-drop</h1>
+        <p class="tag">Client-side encrypted. The server only ever sees ciphertext.</p>
+        <span class="org">donkeyx</span>
+      </div>
+    </header>
+    <main>
+      <section class="panel" id="create-panel">
+        <h2>Leave a drop</h2>
+        <form id="create-form">
+          <label for="secret">Secret or small file</label>
+          <textarea id="secret" name="secret" autocomplete="off" maxlength="16777216"></textarea>
+          <label for="file">Or choose a small file</label>
+          <input id="file" type="file" accept="*/*">
+          <p class="muted">Encrypted in this browser. Never uploaded as plaintext. Maximum 16 MiB.</p>
+          <label for="passphrase">Optional passphrase</label>
+          <input id="passphrase" name="passphrase" type="password" autocomplete="off">
+          <label><input id="burn" type="checkbox" checked> Burn after first download</label>
+          <button type="submit">Create encrypted link</button>
+        </form>
+        <output id="create-result" aria-live="polite"></output>
+      </section>
+      <section class="panel" id="reveal-panel" hidden>
+        <h2>Open drop</h2>
+        <p class="warning">The first download consumes burn-after-read drops, even if decryption fails.</p>
+        <label for="reveal-passphrase">Passphrase, if required</label>
+        <input id="reveal-passphrase" type="password" autocomplete="off">
+        <button id="open-drop" type="button">Open encrypted drop</button>
+        <output id="reveal-result" aria-live="polite"></output>
+      </section>
+    </main>
+    <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read.</p>
+  </div>
   <script src="/static/wasm_exec.js"></script>
   <script src="/static/deaddrop.js"></script>
   <script src="/static/ui.js"></script>
