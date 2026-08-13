@@ -1,5 +1,7 @@
 .git
 .github
+.env
+.env.*
 bin
 node_modules
 test-results

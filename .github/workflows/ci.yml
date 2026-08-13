@@ -116,3 +116,18 @@ jobs:
 
       - name: Run browser tests
         run: npm run test:browser
+
+  helm:
+    name: Helm lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+
+      - name: Lint chart
+        run: helm lint deploy/helm/dead-drop
