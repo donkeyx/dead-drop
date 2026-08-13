@@ -1,0 +1,213 @@
+:root {
+  color-scheme: dark;
+  --bg: #0c0d0a;
+  --bg-2: #14160f;
+  --crate: #1a1c14;
+  --ink: #ece6d4;
+  --muted: #9a937c;
+  --line: #3d3f2e;
+  --brass: #d4a017;
+  --brass-dim: #8b6914;
+  --brass-ink: #1a1406;
+  --leather: #c45c26;
+  --warn: #e8b84a;
+  --ok: #b7c96a;
+  font: 16px/1.5 "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; min-height: 100%; }
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #2a2610 0%, transparent 55%),
+    repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(212, 160, 23, 0.03) 48px),
+    var(--bg);
+}
+
+.wrap {
+  width: min(36rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.25rem 0 3rem;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.brand img {
+  width: 5.5rem;
+  height: 5.5rem;
+  object-fit: cover;
+  border-radius: 0.35rem;
+  box-shadow: 0 0 0 1px var(--brass-dim), 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 1.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 750;
+}
+
+.brand .tag {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+}
+
+.brand .org {
+  display: inline-block;
+  margin-top: 0.35rem;
+  color: var(--brass);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  padding: 1.25rem 1.2rem 1.35rem;
+  background:
+    linear-gradient(180deg, rgba(212, 160, 23, 0.05), transparent 28%),
+    var(--crate);
+  box-shadow: inset 0 1px 0 rgba(232, 230, 212, 0.04), 0 16px 40px rgba(0, 0, 0, 0.28);
+}
+
+.panel h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+label {
+  display: block;
+  margin: 0.9rem 0 0.3rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+textarea, input[type="text"], input[type="password"], input[type="file"] {
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--bg-2);
+  color: inherit;
+}
+
+textarea {
+  min-height: 9rem;
+  resize: vertical;
+  font: 0.98rem/1.45 ui-monospace, "Cascadia Code", monospace;
+}
+
+textarea:focus, input:focus, button:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 1px;
+}
+
+input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--brass);
+  vertical-align: middle;
+  margin-right: 0.4rem;
+}
+
+label:has(#burn) {
+  display: flex;
+  align-items: center;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+  margin-top: 1rem;
+}
+
+button {
+  appearance: none;
+  border: 0;
+  margin-top: 1.1rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: 0.35rem;
+  background: var(--brass);
+  color: var(--brass-ink);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) { filter: brightness(1.08); }
+button:disabled { opacity: 0.65; cursor: wait; }
+
+button[type="button"] {
+  background: transparent;
+  color: var(--brass);
+  border: 1px solid var(--brass-dim);
+}
+
+.muted { color: var(--muted); font-size: 0.88rem; }
+.warning { color: var(--warn); margin: 0.4rem 0 0.8rem; }
+
+output {
+  display: block;
+  margin-top: 1rem;
+  overflow-wrap: anywhere;
+}
+
+output strong {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--ok);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.link-row { display: flex; gap: 0.5rem; align-items: stretch; }
+.link-row input { min-width: 0; font: 0.82rem/1.4 ui-monospace, monospace; }
+.link-row button { margin-top: 0; }
+
+output pre {
+  margin: 0;
+  padding: 0.85rem;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  white-space: pre-wrap;
+  font: 0.95rem/1.45 ui-monospace, monospace;
+}
+
+output a {
+  color: var(--brass);
+  font-weight: 650;
+}
+
+.foot {
+  margin-top: 1.4rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.foot b { color: var(--brass); font-weight: 650; }
+
+[hidden] { display: none !important; }
+
+@media (max-width: 520px) {
+  .brand { gap: 0.8rem; }
+  .brand img { width: 4.25rem; height: 4.25rem; }
+  .brand h1 { font-size: 1.4rem; letter-spacing: 0.1em; }
+}

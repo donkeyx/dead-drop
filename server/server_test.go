@@ -260,8 +260,11 @@ func TestUIHeadersAndShell(t *testing.T) {
 	srv, _ := testServer(t)
 	rr := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
-	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("Client-side encrypted sharing")) {
+	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("Client-side encrypted")) {
 		t.Fatalf("home response: %d %s", rr.Code, rr.Body.String())
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css")) {
+		t.Fatal("UI shell does not load the skin")
 	}
 	for _, forbidden := range []string{"method=\"post\"", "type=\"hidden\""} {
 		if bytes.Contains(rr.Body.Bytes(), []byte(forbidden)) {

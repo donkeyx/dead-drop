@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --from=builder /out/dead-drop /usr/local/bin/dead-drop
 COPY --from=builder /out/dead-drop.wasm /app/web/static/dead-drop.wasm
 COPY --from=builder /out/wasm_exec.js /app/web/static/wasm_exec.js
-COPY web/static/deaddrop.js web/static/ui.js /app/web/static/
+COPY web/static/deaddrop.js web/static/ui.js web/static/skin.css web/static/mark.jpg /app/web/static/
 USER 10001
 EXPOSE 8080
 ENTRYPOINT ["/usr/local/bin/dead-drop"]
