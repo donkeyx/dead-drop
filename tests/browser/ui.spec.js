@@ -1,3 +1,4 @@
+const fs = require("fs");
 const { test, expect } = require("@playwright/test");
 
 test("creates and reveals a burn-after-read text drop", async ({ page, browser }) => {
@@ -43,6 +44,5 @@ test("creates a file drop and downloads the decrypted file", async ({ page, brow
   await recipient.getByRole("link", { name: "Download notes.txt" }).click();
   const file = await download;
   expect(await file.suggestedFilename()).toBe("notes.txt");
-  const filePath = await file.path();
-  expect(require("fs").readFileSync(filePath, "utf8")).toBe("file secret");
+  expect(fs.readFileSync(await file.path(), "utf8")).toBe("file secret");
 });
