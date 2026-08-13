@@ -3,6 +3,10 @@ dist/
 tmp/
 *.test
 .DS_Store
+.env
+.env.*
+!.env.example
+deploy/helm/dead-drop/values.local.yaml
 # built artifacts (regenerate with make wasm)
 web/static/dead-drop.wasm
 web/static/wasm_exec.js
