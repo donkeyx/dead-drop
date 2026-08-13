@@ -42,6 +42,11 @@ export DEADDROP_PASS='correct horse'
 ```bash
 ./bin/dead-drop serve -addr :8080 -data ./data -store sqlite
 
+# shared storage for multiple replicas / Kubernetes HPA
+DEADDROP_STORE=postgres \
+DEADDROP_DATABASE_URL='postgres://user:password@postgres/deaddrop?sslmode=require' \
+./bin/dead-drop serve -addr :8080
+
 # seal client-side, upload ciphertext, print share link (includes #key)
 ./bin/dead-drop put -server http://127.0.0.1:8080 -in secret.txt
 
@@ -89,6 +94,12 @@ make wasm
 ```
 
 The browser encrypts before `POST /api/v1/secrets`; the fragment key is never sent to the server. Text and small files up to 16 MiB are supported, with files downloaded using their encrypted filename and content type. Reveal pages clear the fragment from the visible address bar on first use, but burn-after-read still consumes the drop when the ciphertext is fetched.
+
+## Deployment storage
+
+SQLite and filesystem storage are single-writer backends for one replica with one local data directory. Use `DEADDROP_STORE=postgres` with `DEADDROP_DATABASE_URL` before running multiple replicas or enabling Kubernetes HPA. PostgreSQL keeps burn-after-read `Take` atomic across replicas; the database must be reachable by every pod and protected with TLS and normal secret management.
+
+The current rate limiter is in-memory and therefore per-pod. PostgreSQL makes secret storage safe across replicas, but shared/global rate limiting is a separate deployment-hardening task before treating HPA limits as fleet-wide limits.
 
 ## Library (PR1)
 

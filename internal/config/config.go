@@ -15,6 +15,7 @@ type Config struct {
 	DataDir        string
 	StaticDir      string
 	Store          string // sqlite | fs
+	DatabaseURL    string
 	MaxBytes       int64
 	DefaultTTL     time.Duration
 	MaxTTL         time.Duration
@@ -37,6 +38,7 @@ func LoadFromEnv() (Config, error) {
 		DataDir:      env("DEADDROP_DATA", "./data"),
 		StaticDir:    env("DEADDROP_STATIC", "./web/static"),
 		Store:        strings.ToLower(env("DEADDROP_STORE", "sqlite")),
+		DatabaseURL:  env("DEADDROP_DATABASE_URL", ""),
 		MaxBytes:     envInt64("DEADDROP_MAX_BYTES", 16<<20),
 		DefaultTTL:   envDuration("DEADDROP_DEFAULT_TTL", 24*time.Hour),
 		MaxTTL:       envDuration("DEADDROP_MAX_TTL", 7*24*time.Hour),
@@ -59,8 +61,11 @@ func LoadFromEnv() (Config, error) {
 	if c.TrustProxy && len(c.TrustedProxies) == 0 {
 		return c, fmt.Errorf("DEADDROP_TRUST_PROXY=true requires DEADDROP_TRUSTED_PROXIES")
 	}
-	if c.Store != "sqlite" && c.Store != "fs" {
-		return c, fmt.Errorf("DEADDROP_STORE must be sqlite or fs")
+	if c.Store != "sqlite" && c.Store != "fs" && c.Store != "postgres" {
+		return c, fmt.Errorf("DEADDROP_STORE must be sqlite, fs, or postgres")
+	}
+	if c.Store == "postgres" && c.DatabaseURL == "" {
+		return c, fmt.Errorf("DEADDROP_STORE=postgres requires DEADDROP_DATABASE_URL")
 	}
 	if c.DefaultTTL > c.MaxTTL || c.DefaultTTL < c.MinTTL {
 		return c, fmt.Errorf("invalid TTL defaults")
