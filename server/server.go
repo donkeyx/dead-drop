@@ -113,10 +113,10 @@ const uiShell = `<!doctype html>
       <h2>Leave a drop</h2>
       <form id="create-form">
         <label for="secret">Secret or small file</label>
-        <textarea id="secret" name="secret" autocomplete="off"></textarea>
+        <textarea id="secret" name="secret" autocomplete="off" maxlength="16777216"></textarea>
         <label for="file">Or choose a small file</label>
-        <input id="file" type="file">
-        <p class="muted">The file is read and encrypted in this browser. It is never uploaded as plaintext.</p>
+        <input id="file" type="file" accept="*/*">
+        <p class="muted">The file is read and encrypted in this browser. It is never uploaded as plaintext. Maximum 16 MiB.</p>
         <label for="passphrase">Optional passphrase</label>
         <input id="passphrase" name="passphrase" type="password" autocomplete="off">
         <label><input id="burn" type="checkbox" checked> Burn after first download</label>

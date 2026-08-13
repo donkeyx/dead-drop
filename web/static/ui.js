@@ -3,6 +3,7 @@
 
   const byId = (id) => document.getElementById(id);
   const apiPath = () => "/api/v1/secrets/" + encodeURIComponent(location.pathname.split("/").pop());
+  const maxPlaintextBytes = 16 * 1024 * 1024;
 
   function setMessage(node, message) {
     node.replaceChildren(document.createTextNode(message));
@@ -11,6 +12,22 @@
   function setBusy(button, busy, label) {
     button.disabled = busy;
     button.textContent = busy ? label : button.dataset.label;
+  }
+
+  async function copyText(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const input = document.createElement("textarea");
+    input.value = text;
+    input.setAttribute("readonly", "");
+    input.style.position = "fixed";
+    input.style.opacity = "0";
+    document.body.append(input);
+    input.select();
+    if (!document.execCommand("copy")) throw new Error("clipboard access is unavailable");
+    input.remove();
   }
 
   async function createDrop(event) {
@@ -28,6 +45,9 @@
     try {
       const passphrase = byId("passphrase").value;
       const plaintext = file ? new Uint8Array(await file.arrayBuffer()) : new TextEncoder().encode(text);
+      if (plaintext.byteLength > maxPlaintextBytes) {
+        throw new Error("The selected content is too large (maximum 16 MiB).");
+      }
       const sealed = await DeadDrop.encrypt(plaintext, {
         passphrase,
         filename: file ? file.name : "",
@@ -56,8 +76,12 @@
       copy.dataset.label = "Copy";
       copy.textContent = copy.dataset.label;
       copy.addEventListener("click", async () => {
-        await navigator.clipboard.writeText(link);
-        copy.textContent = "Copied";
+        try {
+          await copyText(link);
+          copy.textContent = "Copied";
+        } catch (error) {
+          copy.textContent = error.message;
+        }
       }, { once: true });
       row.append(linkInput, copy);
       result.append(label, row);
@@ -87,9 +111,13 @@
       result.replaceChildren();
       if (opened.filename) {
         const download = document.createElement("a");
-        download.href = URL.createObjectURL(new Blob([opened.plaintext], { type: opened.contentType || "application/octet-stream" }));
+        const objectURL = URL.createObjectURL(new Blob([opened.plaintext], { type: opened.contentType || "application/octet-stream" }));
+        download.href = objectURL;
         download.download = opened.filename;
         download.textContent = "Download " + opened.filename;
+        download.addEventListener("click", () => {
+          setTimeout(() => URL.revokeObjectURL(objectURL), 1000);
+        }, { once: true });
         result.append(download);
       } else {
         const pre = document.createElement("pre");
