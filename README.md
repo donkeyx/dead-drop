@@ -112,10 +112,11 @@ kubectl create secret generic dead-drop-db \
   -n dead-drop \
   --from-literal=database-url='postgres://deaddrop:password@postgres.example/deaddrop?sslmode=require'
 
+cp deploy/helm/dead-drop/values.example.yaml deploy/helm/dead-drop/values.local.yaml
 helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
   --version 0.1.0 \
   -n dead-drop --create-namespace \
-  --set database.existingSecret=dead-drop-db
+  -f deploy/helm/dead-drop/values.local.yaml
 ```
 
 ## Library (PR1)

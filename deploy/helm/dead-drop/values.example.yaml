@@ -1,0 +1,29 @@
+# Copy to values.local.yaml (gitignored) and edit.
+# Secrets stay out of this file: create dead-drop-db and the TLS secret separately.
+#
+#   cp deploy/helm/dead-drop/values.example.yaml deploy/helm/dead-drop/values.local.yaml
+#   helm upgrade --install dead-drop ./deploy/helm/dead-drop \
+#     -n dead-drop --create-namespace \
+#     -f deploy/helm/dead-drop/values.local.yaml
+
+image:
+  tag: latest
+  pullPolicy: Always
+
+database:
+  existingSecret: dead-drop-db
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 16m
+  hosts:
+    - host: drop.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - drop.example.com
+      secretName: drop-example-tls
