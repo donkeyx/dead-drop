@@ -88,7 +88,7 @@ make wasm
 ./bin/dead-drop serve -addr :8080 -data ./data -static ./web/static
 ```
 
-The browser encrypts before `POST /api/v1/secrets`; the fragment key is never sent to the server. Reveal pages clear the fragment from the visible address bar on first use, but burn-after-read still consumes the drop when the ciphertext is fetched.
+The browser encrypts before `POST /api/v1/secrets`; the fragment key is never sent to the server. Text and small files are supported, with files downloaded using their encrypted filename and content type. Reveal pages clear the fragment from the visible address bar on first use, but burn-after-read still consumes the drop when the ciphertext is fetched.
 
 ## Library (PR1)
 

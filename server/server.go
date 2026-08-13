@@ -101,6 +101,8 @@ const uiShell = `<!doctype html>
     textarea, input { box-sizing: border-box; width: 100%; padding: .65rem; border: 1px solid #52616d; border-radius: .4rem; background: #0e1317; color: inherit; }
     textarea { min-height: 8rem; resize: vertical; } button { margin-top: 1rem; padding: .65rem 1rem; cursor: pointer; }
     output { display: block; margin-top: 1rem; overflow-wrap: anywhere; } .warning { color: #ffd479; }
+    .link-row { display: flex; gap: .5rem; align-items: stretch; } .link-row input { min-width: 0; }
+    .muted { color: #9eabb5; font-size: .9rem; }
     [hidden] { display: none; }
   </style>
 </head>
@@ -111,7 +113,10 @@ const uiShell = `<!doctype html>
       <h2>Leave a drop</h2>
       <form id="create-form">
         <label for="secret">Secret or small file</label>
-        <textarea id="secret" name="secret" autocomplete="off" required></textarea>
+        <textarea id="secret" name="secret" autocomplete="off"></textarea>
+        <label for="file">Or choose a small file</label>
+        <input id="file" type="file">
+        <p class="muted">The file is read and encrypted in this browser. It is never uploaded as plaintext.</p>
         <label for="passphrase">Optional passphrase</label>
         <input id="passphrase" name="passphrase" type="password" autocomplete="off">
         <label><input id="burn" type="checkbox" checked> Burn after first download</label>

@@ -263,6 +263,14 @@ func TestUIHeadersAndShell(t *testing.T) {
 	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("Client-side encrypted sharing")) {
 		t.Fatalf("home response: %d %s", rr.Code, rr.Body.String())
 	}
+	for _, forbidden := range []string{"method=\"post\"", "type=\"hidden\""} {
+		if bytes.Contains(rr.Body.Bytes(), []byte(forbidden)) {
+			t.Fatalf("UI shell contains sensitive form transport: %q", forbidden)
+		}
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/ui.js")) {
+		t.Fatal("UI shell does not load the browser controller")
+	}
 	for _, header := range []string{"Content-Security-Policy", "Referrer-Policy", "Permissions-Policy", "X-Frame-Options"} {
 		if rr.Header().Get(header) == "" {
 			t.Fatalf("missing %s", header)
