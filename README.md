@@ -106,6 +106,10 @@ res, err := blob.Open(pkg, key, nil)
 
 Golden interop vectors: `blob/testdata/v1_nopass.json`, `v1_passphrase.json`.
 
+GitHub Actions runs Go formatting, tests, race tests, vet, a static CLI build, `govulncheck`, WASM asset generation, browser JavaScript syntax checks, vector interop, and the compressed WASM size gate.
+
+The repository does not yet run a full browser automation suite. The current UI boundary is covered by server tests and JavaScript syntax checks; use the local server plus a browser for manual create/reveal review.
+
 ```bash
 go test ./...
 make build
