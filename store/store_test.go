@@ -31,6 +31,22 @@ func TestSQLiteTakeBurnRace(t *testing.T) {
 	runTakeBurnRace(t, s)
 }
 
+func TestPostgresTakeBurnRace(t *testing.T) {
+	dsn := os.Getenv("DEADDROP_TEST_DATABASE_URL")
+	if dsn == "" {
+		t.Skip("set DEADDROP_TEST_DATABASE_URL to run postgres integration tests")
+	}
+	s, err := OpenPostgres(dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	if _, err := s.db.Exec(`TRUNCATE secrets`); err != nil {
+		t.Fatal(err)
+	}
+	runTakeBurnRace(t, s)
+}
+
 func runTakeBurnRace(t *testing.T, s Store) {
 	t.Helper()
 	ctx := context.Background()

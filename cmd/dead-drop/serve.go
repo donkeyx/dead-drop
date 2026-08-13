@@ -23,6 +23,7 @@ func cmdServe(args []string) int {
 	data := fs.String("data", "", "data directory (default DEADDROP_DATA or ./data)")
 	static := fs.String("static", "", "static assets directory (default DEADDROP_STATIC or ./web/static)")
 	storeKind := fs.String("store", "", "sqlite|fs (default DEADDROP_STORE or sqlite)")
+	databaseURL := fs.String("database-url", "", "PostgreSQL URL (default DEADDROP_DATABASE_URL when -store=postgres)")
 	if err := fs.Parse(args); err != nil {
 		return exitUsage
 	}
@@ -44,6 +45,9 @@ func cmdServe(args []string) int {
 	if *storeKind != "" {
 		cfg.Store = *storeKind
 	}
+	if *databaseURL != "" {
+		cfg.DatabaseURL = *databaseURL
+	}
 
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
@@ -51,6 +55,8 @@ func cmdServe(args []string) int {
 	switch cfg.Store {
 	case "fs":
 		st, err = store.OpenFS(cfg.DataDir)
+	case "postgres":
+		st, err = store.OpenPostgres(cfg.DatabaseURL)
 	default:
 		st, err = store.OpenSQLite(cfg.DataDir)
 	}
