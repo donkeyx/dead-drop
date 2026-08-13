@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Go checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)"
+
+      - name: Test
+        run: go test ./...
+
+      - name: Race test
+        run: go test -race ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build CLI
+        run: CGO_ENABLED=0 go build -trimpath -o bin/dead-drop ./cmd/dead-drop
+
+      - name: Vulnerability scan
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  wasm:
+    name: WASM and browser assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build WASM assets
+        run: make wasm
+
+      - name: Check browser JavaScript
+        run: node --check web/static/deaddrop.js && node --check web/static/ui.js
+
+      - name: Run vector interop harness
+        run: node web/static/wasm_vectors.mjs
+
+      - name: Check generated artifact limits
+        run: |
+          test -f web/static/dead-drop.wasm
+          size=$(gzip -c web/static/dead-drop.wasm | wc -c)
+          test "$size" -le 1572864
