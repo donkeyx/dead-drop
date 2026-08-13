@@ -268,6 +268,12 @@ func TestUIHeadersAndShell(t *testing.T) {
 	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=1")) {
 		t.Fatal("UI shell does not load the cache-busted skin")
 	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/favicon.ico?v=1")) {
+		t.Fatal("UI shell does not load the favicon")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/favicon.png?v=1")) {
+		t.Fatal("UI shell does not load the PNG favicon")
+	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/mark.jpg?v=1")) {
 		t.Fatal("UI shell does not load the cache-busted mark")
 	}
@@ -303,6 +309,9 @@ func TestStaticAssetCacheHeaders(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "skin.css"), []byte("body{}"), 0o644); err != nil {
 		t.Fatal(err)
 	}
+	if err := os.WriteFile(filepath.Join(dir, "favicon.ico"), []byte("ico"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	srv, _ := testServer(t)
 	srv.cfg.StaticDir = dir
 	h := srv.Handler()
@@ -323,6 +332,12 @@ func TestStaticAssetCacheHeaders(t *testing.T) {
 	}
 	if got := rr.Header().Get("Cache-Control"); got != "no-store" {
 		t.Fatalf("missing cache: %q", got)
+	}
+
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/favicon.ico", nil))
+	if rr.Code != http.StatusOK || rr.Body.String() != "ico" {
+		t.Fatalf("root favicon: %d %q", rr.Code, rr.Body.String())
 	}
 }
 

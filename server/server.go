@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -49,6 +50,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /", s.handleHome)
 	mux.HandleFunc("GET /s/{id}", s.handleReveal)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", staticFiles(http.Dir(s.cfg.StaticDir))))
+	mux.HandleFunc("GET /favicon.ico", s.handleFavicon)
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 	mux.HandleFunc("GET /readyz", s.handleReadyz)
 	mux.HandleFunc("POST /api/v1/secrets", s.handleCreate)
@@ -78,6 +80,14 @@ func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleReveal(w http.ResponseWriter, r *http.Request) {
 	s.writeShell(w)
+}
+
+func (s *Server) handleFavicon(w http.ResponseWriter, r *http.Request) {
+	if s.cfg.StaticDir == "" {
+		http.NotFound(w, r)
+		return
+	}
+	http.ServeFile(w, r, filepath.Join(s.cfg.StaticDir, "favicon.ico"))
 }
 
 func staticFiles(root http.FileSystem) http.Handler {
@@ -124,7 +134,9 @@ const uiShell = `<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>dead-drop</title>
-  <link rel="icon" href="/static/mark.jpg?v=1">
+  <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
+  <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
   <link rel="stylesheet" href="/static/skin.css?v=1">
 </head>
 <body>
