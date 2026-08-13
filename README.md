@@ -105,8 +105,16 @@ The current rate limiter is in-memory and therefore per-pod. PostgreSQL makes se
 
 The chart at `deploy/helm/dead-drop` deploys stateless replicas backed by an external PostgreSQL database. It includes readiness/liveness probes, a PodDisruptionBudget, optional HPA, Ingress support, non-root security settings, and a Secret reference for `DEADDROP_DATABASE_URL`.
 
+CI publishes `ghcr.io/donkeyx/dead-drop` and `oci://ghcr.io/donkeyx/charts/dead-drop` from `master` and `v*` tags. See [deploy/helm/dead-drop/README.md](deploy/helm/dead-drop/README.md).
+
 ```bash
-helm upgrade --install dead-drop ./deploy/helm/dead-drop \
+kubectl create secret generic dead-drop-db \
+  -n dead-drop \
+  --from-literal=database-url='postgres://deaddrop:password@postgres.example/deaddrop?sslmode=require'
+
+helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
+  --version 0.1.0 \
+  -n dead-drop --create-namespace \
   --set database.existingSecret=dead-drop-db
 ```
 

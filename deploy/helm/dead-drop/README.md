@@ -2,18 +2,39 @@
 
 This chart deploys stateless `dead-drop` replicas backed by an external PostgreSQL database.
 
-Create the database URL Secret separately:
+Published artifacts (from `master` and `v*` tags):
+
+| Kind | Location |
+|------|----------|
+| Image | `ghcr.io/donkeyx/dead-drop` (`latest`, `sha-<git>`, semver on tags) |
+| Chart | `oci://ghcr.io/donkeyx/charts/dead-drop` |
+
+Create the namespace (optional if you pass `--create-namespace`) and the database URL Secret separately. The chart does not create either.
 
 ```bash
 kubectl create secret generic dead-drop-db \
-  --from-literal=database-url='postgres://user:password@postgres.example/deaddrop?sslmode=require'
+  -n dead-drop \
+  --from-literal=database-url='postgres://deaddrop:password@postgres.example/deaddrop?sslmode=require'
 ```
 
-Install with the Secret reference:
+Install the published chart:
+
+```bash
+helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
+  --version 0.1.0 \
+  -n dead-drop --create-namespace \
+  --set database.existingSecret=dead-drop-db
+```
+
+Or the chart from this repo (image tag defaults to `Chart.appVersion`, so set it until you cut a `v*` release):
 
 ```bash
 helm upgrade --install dead-drop ./deploy/helm/dead-drop \
-  --set database.existingSecret=dead-drop-db
+  -n dead-drop --create-namespace \
+  --set database.existingSecret=dead-drop-db \
+  --set image.tag=latest
 ```
+
+If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[0].name=ghcr-pull-secret`.
 
 Set `autoscaling.enabled=true` to enable HPA. PostgreSQL is required for multiple replicas; SQLite and filesystem storage are not supported by this chart. The application rate limiter remains per pod until a shared limiter is added.
