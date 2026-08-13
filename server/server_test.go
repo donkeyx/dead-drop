@@ -256,6 +256,37 @@ func TestNoCORS(t *testing.T) {
 	}
 }
 
+func TestUIHeadersAndShell(t *testing.T) {
+	srv, _ := testServer(t)
+	rr := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("Client-side encrypted sharing")) {
+		t.Fatalf("home response: %d %s", rr.Code, rr.Body.String())
+	}
+	for _, forbidden := range []string{"method=\"post\"", "type=\"hidden\""} {
+		if bytes.Contains(rr.Body.Bytes(), []byte(forbidden)) {
+			t.Fatalf("UI shell contains sensitive form transport: %q", forbidden)
+		}
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/ui.js")) {
+		t.Fatal("UI shell does not load the browser controller")
+	}
+	for _, header := range []string{"Content-Security-Policy", "Referrer-Policy", "Permissions-Policy", "X-Frame-Options"} {
+		if rr.Header().Get(header) == "" {
+			t.Fatalf("missing %s", header)
+		}
+	}
+	if rr.Header().Get("Cache-Control") != "no-store" {
+		t.Fatal("UI must not be cached")
+	}
+
+	rr = httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/s/example", nil))
+	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("open-drop")) {
+		t.Fatalf("reveal response: %d %s", rr.Code, rr.Body.String())
+	}
+}
+
 // ensure Take-only: Get must not be used — compile-time checklist via this comment
 // and parallel burn test above. Optional: spy store.
 type takeOnlyStore struct {

@@ -13,6 +13,7 @@ import (
 type Config struct {
 	Addr           string
 	DataDir        string
+	StaticDir      string
 	Store          string // sqlite | fs
 	MaxBytes       int64
 	DefaultTTL     time.Duration
@@ -34,6 +35,7 @@ func LoadFromEnv() (Config, error) {
 	c := Config{
 		Addr:         env("DEADDROP_ADDR", ":8080"),
 		DataDir:      env("DEADDROP_DATA", "./data"),
+		StaticDir:    env("DEADDROP_STATIC", "./web/static"),
 		Store:        strings.ToLower(env("DEADDROP_STORE", "sqlite")),
 		MaxBytes:     envInt64("DEADDROP_MAX_BYTES", 16<<20),
 		DefaultTTL:   envDuration("DEADDROP_DEFAULT_TTL", 24*time.Hour),
