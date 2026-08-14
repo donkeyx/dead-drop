@@ -9,6 +9,8 @@ https://your.host/s/<id>#<key>
 
 ## Status
 
+**v0.1.0** — first tagged release. Public instance: [drop.donkeyx.dev](https://drop.donkeyx.dev/).
+
 | Piece | State |
 |-------|--------|
 | **Design** | [DESIGN.md](DESIGN.md) |
@@ -18,7 +20,8 @@ https://your.host/s/<id>#<key>
 | **PR4 — HTTP API** | done (`server/`, `dead-drop serve`) |
 | **PR5 — network put/get** | done |
 | **PR6 — WASM crypto** | done (`make wasm` / `make wasm-test`) |
-| **PR7 — browser UI shell** | done (create/reveal pages, same-origin JS/WASM) |
+| **PR7 — browser UI** | done (create/reveal, `/about`, same-origin WASM) |
+| **Postgres + Helm** | done (replicas, GHCR + Docker Hub images) |
 
 ## CLI (offline)
 
@@ -109,7 +112,14 @@ The current rate limiter is in-memory and therefore per-pod. PostgreSQL makes se
 
 The chart at `deploy/helm/dead-drop` deploys stateless replicas backed by an external PostgreSQL database. It includes readiness/liveness probes, a PodDisruptionBudget, optional HPA, Ingress support, non-root security settings, and a Secret reference for `DEADDROP_DATABASE_URL`.
 
-CI publishes `ghcr.io/donkeyx/dead-drop`, `docker.io/donkeyx/dead-drop`, and `oci://ghcr.io/donkeyx/charts/dead-drop` from `master` and `v*` tags. Docker Hub publishing requires the repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`; pull the image from either registry. See [deploy/helm/dead-drop/README.md](deploy/helm/dead-drop/README.md).
+CI publishes `ghcr.io/donkeyx/dead-drop`, `docker.io/donkeyx/dead-drop`, and `oci://ghcr.io/donkeyx/charts/dead-drop` from `master` and `v*` tags. Pull either image:
+
+```bash
+docker pull ghcr.io/donkeyx/dead-drop:0.1.0
+docker pull docker.io/donkeyx/dead-drop:0.1.0
+```
+
+See [deploy/helm/dead-drop/README.md](deploy/helm/dead-drop/README.md).
 
 ```bash
 kubectl create secret generic dead-drop-db \
@@ -161,11 +171,11 @@ make build
 
 If you do not trust the hosted instance, run the server yourself from this repository. The server cannot decrypt stored drops, but a compromised deployment could serve modified browser JavaScript and capture plaintext or fragment keys before encryption. The offline CLI avoids that hosted-browser trust boundary entirely.
 
-## Stack (planned)
+## Stack
 
-- Go library (SEAL v1) + CLI
-- Go **WASM** browser crypto (same code)
-- HTMX UI chrome only
+- Go library (SEAL v1) + CLI + stdlib HTTP server
+- Go **WASM** browser crypto (same code, same-origin UI)
+- Helm chart; images on GHCR and Docker Hub
 - MIT
 
 ## License

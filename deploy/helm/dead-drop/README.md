@@ -43,6 +43,14 @@ helm upgrade --install dead-drop ./deploy/helm/dead-drop \
   -f deploy/helm/dead-drop/values.local.yaml
 ```
 
+To pull the image from Docker Hub instead of GHCR, set this in the overlay:
+
+```yaml
+image:
+  repository: docker.io/donkeyx/dead-drop
+  tag: "0.1.0"
+```
+
 If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[0].name=ghcr-pull-secret`.
 
 Set `autoscaling.enabled=true` to enable HPA. PostgreSQL is required for multiple replicas; SQLite and filesystem storage are not supported by this chart. The application rate limiter remains per pod until a shared limiter is added.
