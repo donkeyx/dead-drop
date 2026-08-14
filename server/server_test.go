@@ -249,6 +249,19 @@ func TestHomeTurnstileCSP(t *testing.T) {
 	}
 }
 
+func TestHomeOmitsTurnstileForSmoke(t *testing.T) {
+	srv, _ := testServer(t)
+	srv.cfg.TurnstileSiteKey = "site-key-test"
+	srv.cfg.SmokeBypass = "smoke-secret"
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("x-dead-drop-smoke", "smoke-secret")
+	srv.Handler().ServeHTTP(rr, req)
+	if strings.Contains(rr.Body.String(), `data-turnstile-sitekey="site-key-test"`) {
+		t.Fatal("smoke request should not receive the Turnstile site key")
+	}
+}
+
 func TestCreateRequiresTurnstile(t *testing.T) {
 	dir := t.TempDir()
 	st, err := store.OpenSQLite(dir)
