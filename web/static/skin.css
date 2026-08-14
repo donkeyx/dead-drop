@@ -133,16 +133,13 @@ textarea:focus, input:focus, button:focus-visible {
   outline-offset: 1px;
 }
 
-.privacy-toggle {
-  margin-top: 0.5rem;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
 .privacy-mode { color: transparent; text-shadow: 0 0 8px var(--ink); }
 
 .input-with-action { display: flex; gap: 0.45rem; }
 .input-with-action input { min-width: 0; flex: 1; }
+.secret-input { align-items: stretch; }
+.secret-input textarea { min-width: 0; flex: 1; }
+.secret-input .visibility-toggle { align-self: flex-start; }
 .visibility-toggle { flex: 0 0 2.8rem; margin-top: 0; padding: 0.4rem; }
 
 input[type="checkbox"] {

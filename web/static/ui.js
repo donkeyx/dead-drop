@@ -136,17 +136,22 @@
 
   byId("create-form")?.addEventListener("submit", createDrop);
   byId("open-drop")?.addEventListener("click", revealDrop);
-  document.querySelectorAll("[data-toggle-password]").forEach((toggle) => {
+  document.querySelectorAll("[data-toggle-visibility]").forEach((toggle) => {
     toggle.addEventListener("click", () => {
-      const input = byId(toggle.dataset.togglePassword);
-      const visible = input.type === "text";
-      input.type = visible ? "password" : "text";
-      toggle.setAttribute("aria-label", visible ? "Show passphrase" : "Hide passphrase");
-      toggle.title = visible ? "Show passphrase" : "Hide passphrase";
+      const input = byId(toggle.dataset.toggleVisibility);
+      const isSecret = input.tagName === "TEXTAREA";
+      const visible = isSecret ? !input.classList.contains("privacy-mode") : input.type === "text";
+      const nextVisible = !visible;
+      if (isSecret) {
+        input.classList.toggle("privacy-mode", !nextVisible);
+      } else {
+        input.type = nextVisible ? "text" : "password";
+      }
+      const label = nextVisible ? "Hide" : "Show";
+      const name = isSecret ? "secret" : "passphrase";
+      toggle.setAttribute("aria-label", label + " " + name);
+      toggle.title = label + " " + name;
     });
-  });
-  byId("privacy-mode")?.addEventListener("change", (event) => {
-    byId("secret").classList.toggle("privacy-mode", event.target.checked);
   });
   document.querySelectorAll("button").forEach((button) => {
     button.dataset.label = button.textContent;

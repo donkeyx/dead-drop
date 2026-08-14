@@ -163,8 +163,10 @@ const uiShell = `<!doctype html>
         <h2>Leave a drop</h2>
         <form id="create-form">
           <label for="secret">Secret or small file</label>
-          <textarea id="secret" name="secret" autocomplete="off" maxlength="16777216" placeholder="Type a secret message..."></textarea>
-          <label class="privacy-toggle"><input id="privacy-mode" type="checkbox"> Hide text while typing</label>
+          <div class="input-with-action secret-input">
+            <textarea id="secret" class="privacy-mode" name="secret" autocomplete="off" maxlength="16777216" placeholder="Type a secret message..."></textarea>
+            <button class="visibility-toggle" type="button" data-toggle-visibility="secret" aria-label="Show secret" title="Show secret">◉</button>
+          </div>
           <div class="file-pick">
             <label for="file">Or attach a small file</label>
             <input id="file" type="file" accept="*/*">
@@ -173,7 +175,7 @@ const uiShell = `<!doctype html>
           <label for="passphrase">Optional passphrase</label>
           <div class="input-with-action">
             <input id="passphrase" name="passphrase" type="password" autocomplete="off">
-            <button class="visibility-toggle" type="button" data-toggle-password="passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
+            <button class="visibility-toggle" type="button" data-toggle-visibility="passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
           </div>
           <label><input id="burn" type="checkbox" checked> Burn after first download</label>
           <button class="primary-action" type="submit">Create encrypted link</button>
@@ -186,7 +188,7 @@ const uiShell = `<!doctype html>
         <label for="reveal-passphrase">Passphrase, if required</label>
         <div class="input-with-action">
           <input id="reveal-passphrase" type="password" autocomplete="off">
-          <button class="visibility-toggle" type="button" data-toggle-password="reveal-passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
+          <button class="visibility-toggle" type="button" data-toggle-visibility="reveal-passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
         </div>
         <button id="open-drop" type="button">Open encrypted drop</button>
         <output id="reveal-result" aria-live="polite"></output>
