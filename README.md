@@ -16,7 +16,7 @@
 
 A dead drop for secrets. The browser (or CLI) encrypts **before** upload. The key lives in the URL fragment (`#...`), which never goes to the server. All the operator holds is ciphertext.
 
-Handy when a password-manager share isn't an option — an API token, a private key, a small kubeconfig — and you don't want that sitting in Slack or Discord history. Burn-after-read and a short TTL are on by default so the drop doesn't hang around.
+Handy when a password-manager share isn't an option — an API token, a private key, a small kubeconfig — or you just need to move a secret between your own devices. Don't paste it into Slack or Discord and use the channel as a clipboard; those histories keep a copy. Burn-after-read and a short TTL are on by default so the drop doesn't hang around.
 
 ```
 https://your.host/s/<id>#<key>
