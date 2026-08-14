@@ -25,6 +25,10 @@ env:
   minTTL: 5m
   trustProxy: "false"
   trustedProxies: ""
+  # Optional. Empty = no Turnstile (self-host default).
+  turnstileSiteKey: ""
+  turnstileSecret: ""
+  smokeBypass: ""
 
 ingress:
   enabled: false

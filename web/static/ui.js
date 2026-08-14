@@ -4,6 +4,8 @@
   const byId = (id) => document.getElementById(id);
   const apiPath = () => "/api/v1/secrets/" + encodeURIComponent(location.pathname.split("/").pop());
   const maxPlaintextBytes = 16 * 1024 * 1024;
+  const turnstileSiteKey = document.documentElement.dataset.turnstileSitekey || "";
+  let turnstileWidget = null;
 
   function setMessage(node, message, state = "error") {
     node.replaceChildren(document.createTextNode(message));
@@ -54,12 +56,24 @@
         filename: file ? file.name : "",
         contentType: file ? (file.type || "application/octet-stream") : "text/plain; charset=utf-8"
       });
+      const headers = { "Content-Type": "application/octet-stream", "X-Seal-Burn": byId("burn").checked ? "1" : "0" };
+      const token = await turnstileToken();
+      if (token) headers["CF-Turnstile-Response"] = token;
       const response = await fetch("/api/v1/secrets", {
         method: "POST",
-        headers: { "Content-Type": "application/octet-stream", "X-Seal-Burn": byId("burn").checked ? "1" : "0" },
+        headers,
         body: sealed.blob
       });
-      if (!response.ok) throw new Error("server rejected the encrypted drop");
+      if (!response.ok) {
+        let message = "server rejected the encrypted drop";
+        try {
+          const failed = await response.json();
+          if (failed.error === "human_check") message = "Human check failed. Reload and try again.";
+          else if (failed.error === "rate_limit") message = "Too many creates. Wait and try again.";
+        } catch (_) { /* keep default */ }
+        throw new Error(message);
+      }
+      if (window.turnstile && turnstileWidget !== null) window.turnstile.reset(turnstileWidget);
       const created = await response.json();
       const link = location.origin + created.path + "#" + sealed.key;
       result.replaceChildren();
@@ -134,6 +148,38 @@
     }
   }
 
+  function loadTurnstile() {
+    return new Promise((resolve, reject) => {
+      if (window.turnstile) {
+        resolve();
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Could not load human check"));
+      document.head.append(script);
+    });
+  }
+
+  async function setupTurnstile() {
+    if (!turnstileSiteKey) return;
+    const box = byId("cf-turnstile");
+    if (box) box.hidden = false;
+    await loadTurnstile();
+    if (turnstileWidget !== null) return;
+    turnstileWidget = window.turnstile.render("#cf-turnstile", { sitekey: turnstileSiteKey });
+  }
+
+  async function turnstileToken() {
+    if (!turnstileSiteKey) return "";
+    await setupTurnstile();
+    const token = window.turnstile.getResponse(turnstileWidget);
+    if (!token) throw new Error("Complete the human check first.");
+    return token;
+  }
+
   byId("create-form")?.addEventListener("submit", createDrop);
   byId("open-drop")?.addEventListener("click", revealDrop);
   document.querySelectorAll("[data-toggle-visibility]").forEach((toggle) => {
@@ -159,5 +205,7 @@
   if (location.pathname.startsWith("/s/")) {
     byId("create-panel").hidden = true;
     byId("reveal-panel").hidden = false;
+  } else {
+    setupTurnstile().catch(() => {});
   }
 })();

@@ -54,6 +54,18 @@ spec:
               value: {{ .Values.env.trustProxy | quote }}
             - name: DEADDROP_TRUSTED_PROXIES
               value: {{ .Values.env.trustedProxies | quote }}
+            {{- with .Values.env.turnstileSiteKey }}
+            - name: DEADDROP_TURNSTILE_SITE_KEY
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.env.turnstileSecret }}
+            - name: DEADDROP_TURNSTILE_SECRET
+              value: {{ . | quote }}
+            {{- end }}
+            {{- with .Values.env.smokeBypass }}
+            - name: DEADDROP_SMOKE_BYPASS
+              value: {{ . | quote }}
+            {{- end }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           readinessProbe:

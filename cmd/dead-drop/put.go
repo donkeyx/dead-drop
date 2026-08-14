@@ -132,6 +132,9 @@ func cmdPut(args []string) int {
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if resp.StatusCode != http.StatusCreated {
 		fmt.Fprintf(os.Stderr, "put: server %s: %s\n", resp.Status, strings.TrimSpace(string(body)))
+		if resp.StatusCode == http.StatusForbidden && strings.Contains(string(body), "human_check") {
+			fmt.Fprintf(os.Stderr, "put: this host requires a browser human check; use the web UI or a self-hosted server\n")
+		}
 		if resp.StatusCode == http.StatusNotFound {
 			return exitNotFound
 		}
