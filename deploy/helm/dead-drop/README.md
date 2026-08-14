@@ -65,8 +65,13 @@ Create the `production` environment on the repo, then add:
 |------|------|--------|
 | Secret | `KUBECONFIG` | Deploy-only kubeconfig YAML (not a laptop admin file) |
 | Secret | `HELM_VALUES` | Cluster overlay YAML — same shape as `values.example.yaml`. `image.tag` is set by the workflow. |
+| Variable | `SMOKE_URL` | Optional public origin, e.g. `https://drop.donkeyx.dev`. Tried first for `/readyz`. |
 
-Smoke hits `/readyz` through `kubectl port-forward` to the in-cluster Service. Do not curl the public hostname from GitHub — Cloudflare Bot Fight returns 403 to that UA. `SMOKE_URL` is unused.
+Allow GitHub (and any uptime probe) to hit health paths. In Cloudflare → **Security** → **WAF** → **Custom rules**, skip Bot Fight for:
+
+`(http.host eq "drop.donkeyx.dev" and http.request.uri.path in {"/readyz" "/healthz" "/startupz"})`
+
+Action: **Skip** → Bot Fight Mode / Super Bot Fight Mode. Those paths only return `ready` / `ok` / `started`. If the public GET 403s, the job falls back to `kubectl port-forward`.
 
 Mint the kubeconfig once (needs cluster-admin). It can only change objects in `dead-drop`:
 
