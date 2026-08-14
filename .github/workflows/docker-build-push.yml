@@ -89,6 +89,16 @@ jobs:
           provenance: false
           sbom: false
 
+      - name: Update Docker Hub README
+        if: github.event_name != 'pull_request' && vars.DOCKERHUB_USERNAME != ''
+        continue-on-error: true
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: donkeyx/dead-drop
+          readme-filepath: ./README.md
+
   helm:
     name: Helm chart
     runs-on: ubuntu-latest
