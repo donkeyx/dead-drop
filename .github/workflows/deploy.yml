@@ -131,8 +131,13 @@ jobs:
         if: ${{ vars.SMOKE_URL != '' }}
         env:
           SMOKE_URL: ${{ vars.SMOKE_URL }}
+          SMOKE_BYPASS: ${{ secrets.SMOKE_BYPASS }}
         run: |
           set -euo pipefail
+          if [ -z "${SMOKE_BYPASS}" ]; then
+            echo "::error::Set production secret SMOKE_BYPASS to the Cloudflare skip header value."
+            exit 1
+          fi
           npm ci
           npx playwright install --with-deps chromium
           npx playwright test --config playwright.smoke.config.js
