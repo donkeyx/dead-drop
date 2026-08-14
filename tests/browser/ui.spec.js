@@ -18,7 +18,8 @@ test("creates and reveals a burn-after-read text drop", async ({ page, browser }
   const recipient = await browser.newPage();
   await recipient.goto(shareURL);
   await recipient.getByRole("button", { name: "Open encrypted drop" }).click();
-  await expect(recipient.locator("#reveal-result")).toHaveText("browser secret");
+  await expect(recipient.locator("#revealed-secret")).toHaveText("browser secret");
+  await expect(recipient.locator("#revealed-secret")).toHaveClass(/privacy-mode/);
   expect(apiRequests.every((url) => !url.includes("#"))).toBeTruthy();
 
   const secondRecipient = await browser.newPage();
