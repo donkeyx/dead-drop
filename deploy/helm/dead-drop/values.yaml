@@ -25,10 +25,15 @@ env:
   minTTL: 5m
   trustProxy: "false"
   trustedProxies: ""
-  # Optional. Empty = no Turnstile (self-host default).
+  # Optional. Prefer turnstile.existingSecret in production.
   turnstileSiteKey: ""
   turnstileSecret: ""
   smokeBypass: ""
+
+turnstile:
+  existingSecret: ""
+  siteKeyKey: site-key
+  secretKey: secret
 
 ingress:
   enabled: false
