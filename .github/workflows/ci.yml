@@ -111,7 +111,16 @@ jobs:
           cache: true
 
       - name: Build WASM assets
-        run: make wasm
+        run: |
+          set -euo pipefail
+          mkdir -p web/static
+          WASM_EXEC="$(go env GOROOT)/lib/wasm/wasm_exec.js"
+          if [ ! -f "${WASM_EXEC}" ]; then
+            WASM_EXEC="$(go env GOROOT)/misc/wasm/wasm_exec.js"
+          fi
+          cp "${WASM_EXEC}" web/static/wasm_exec.js
+          GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" \
+            -o web/static/dead-drop.wasm ./cmd/dead-drop-wasm
 
       - name: Install npm deps
         run: npm ci
