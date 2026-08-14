@@ -133,6 +133,18 @@ textarea:focus, input:focus, button:focus-visible {
   outline-offset: 1px;
 }
 
+.privacy-toggle {
+  margin-top: 0.5rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.privacy-mode { color: transparent; text-shadow: 0 0 8px var(--ink); }
+
+.input-with-action { display: flex; gap: 0.45rem; }
+.input-with-action input { min-width: 0; flex: 1; }
+.visibility-toggle { flex: 0 0 2.8rem; margin-top: 0; padding: 0.4rem; }
+
 input[type="checkbox"] {
   width: 1.05rem;
   height: 1.05rem;
@@ -229,6 +241,11 @@ output a {
 }
 
 .foot b { color: var(--brass); font-weight: 650; }
+.foot a, .info-page a { color: var(--brass); }
+
+.info-page .panel { max-width: 100%; }
+.info-page li { margin: 0.65rem 0; }
+.info-page code { color: var(--brass); }
 
 [hidden] { display: none !important; }
 

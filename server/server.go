@@ -49,6 +49,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", s.handleHome)
 	mux.HandleFunc("GET /s/{id}", s.handleReveal)
+	mux.HandleFunc("GET /about", s.handleAbout)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", staticFiles(http.Dir(s.cfg.StaticDir))))
 	mux.HandleFunc("GET /favicon.ico", s.handleFavicon)
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
@@ -80,6 +81,10 @@ func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleReveal(w http.ResponseWriter, r *http.Request) {
 	s.writeShell(w)
+}
+
+func (s *Server) handleAbout(w http.ResponseWriter, r *http.Request) {
+	s.writePage(w, aboutPage)
 }
 
 func (s *Server) handleFavicon(w http.ResponseWriter, r *http.Request) {
@@ -123,9 +128,13 @@ func (w *staticCacheWriter) Write(p []byte) (int, error) {
 }
 
 func (s *Server) writeShell(w http.ResponseWriter) {
+	s.writePage(w, uiShell)
+}
+
+func (s *Server) writePage(w http.ResponseWriter, page string) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = io.WriteString(w, uiShell)
+	_, _ = io.WriteString(w, page)
 }
 
 const uiShell = `<!doctype html>
@@ -155,13 +164,17 @@ const uiShell = `<!doctype html>
         <form id="create-form">
           <label for="secret">Secret or small file</label>
           <textarea id="secret" name="secret" autocomplete="off" maxlength="16777216" placeholder="Type a secret message..."></textarea>
+          <label class="privacy-toggle"><input id="privacy-mode" type="checkbox"> Hide text while typing</label>
           <div class="file-pick">
             <label for="file">Or attach a small file</label>
             <input id="file" type="file" accept="*/*">
           </div>
           <p class="muted"><span class="lock-mark" aria-hidden="true">◆</span> Encrypted in this browser. Never uploaded as plaintext. Maximum 16 MiB.</p>
           <label for="passphrase">Optional passphrase</label>
-          <input id="passphrase" name="passphrase" type="password" autocomplete="off">
+          <div class="input-with-action">
+            <input id="passphrase" name="passphrase" type="password" autocomplete="off">
+            <button class="visibility-toggle" type="button" data-toggle-password="passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
+          </div>
           <label><input id="burn" type="checkbox" checked> Burn after first download</label>
           <button class="primary-action" type="submit">Create encrypted link</button>
         </form>
@@ -171,16 +184,55 @@ const uiShell = `<!doctype html>
         <h2>Open drop</h2>
         <p class="warning">The first download consumes burn-after-read drops, even if decryption fails.</p>
         <label for="reveal-passphrase">Passphrase, if required</label>
-        <input id="reveal-passphrase" type="password" autocomplete="off">
+        <div class="input-with-action">
+          <input id="reveal-passphrase" type="password" autocomplete="off">
+          <button class="visibility-toggle" type="button" data-toggle-password="reveal-passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
+        </div>
         <button id="open-drop" type="button">Open encrypted drop</button>
         <output id="reveal-result" aria-live="polite"></output>
       </section>
     </main>
-    <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read.</p>
+    <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read. <a href="/about">How it works</a></p>
   </div>
   <script src="/static/wasm_exec.js"></script>
   <script src="/static/deaddrop.js"></script>
   <script src="/static/ui.js"></script>
+</body>
+</html>`
+
+const aboutPage = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How dead-drop works</title>
+  <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
+  <link rel="stylesheet" href="/static/skin.css?v=1">
+</head>
+<body>
+  <div class="wrap info-page">
+    <header class="brand">
+      <img src="/static/mark.jpg?v=1" width="88" height="88" alt="">
+      <div>
+        <h1>dead-drop</h1>
+        <p class="tag">A transparent envelope for secrets.</p>
+        <span class="org">donkeyx</span>
+      </div>
+    </header>
+    <main class="panel">
+      <h2>How it works</h2>
+      <p>Your browser encrypts the text or file before it leaves your device. The server stores and returns only the encrypted blob.</p>
+      <p>The decryption key stays in the URL fragment after the <code>#</code>. Browsers do not send URL fragments in HTTP requests, so the server never receives that key.</p>
+      <h2>What to trust</h2>
+      <ul>
+        <li>The source code is public at <a href="https://github.com/donkeyx/dead-drop">github.com/donkeyx/dead-drop</a>.</li>
+        <li>Burn-after-read is atomic: one successful download consumes a drop.</li>
+        <li>Client-side encryption is not a promise that the hosting server is harmless. Verify the code or run your own instance if you do not trust this one.</li>
+      </ul>
+      <p class="warning">Do not use this service for anything where you cannot accept the risk of a compromised browser, server, or deployment.</p>
+      <p class="foot"><a href="/">Back to dead-drop</a></p>
+    </main>
+  </div>
 </body>
 </html>`
 

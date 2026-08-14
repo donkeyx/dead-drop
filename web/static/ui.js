@@ -136,6 +136,18 @@
 
   byId("create-form")?.addEventListener("submit", createDrop);
   byId("open-drop")?.addEventListener("click", revealDrop);
+  document.querySelectorAll("[data-toggle-password]").forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const input = byId(toggle.dataset.togglePassword);
+      const visible = input.type === "text";
+      input.type = visible ? "password" : "text";
+      toggle.setAttribute("aria-label", visible ? "Show passphrase" : "Hide passphrase");
+      toggle.title = visible ? "Show passphrase" : "Hide passphrase";
+    });
+  });
+  byId("privacy-mode")?.addEventListener("change", (event) => {
+    byId("secret").classList.toggle("privacy-mode", event.target.checked);
+  });
   document.querySelectorAll("button").forEach((button) => {
     button.dataset.label = button.textContent;
   });
