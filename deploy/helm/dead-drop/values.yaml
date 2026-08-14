@@ -28,11 +28,7 @@ ingress:
   enabled: false
   className: ""
   annotations: {}
-  hosts:
-    - host: dead-drop.example.com
-      paths:
-        - path: /
-          pathType: Prefix
+  hosts: []
   tls: []
 
 autoscaling:

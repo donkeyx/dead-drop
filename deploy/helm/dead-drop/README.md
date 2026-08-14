@@ -24,6 +24,8 @@ cp deploy/helm/dead-drop/values.example.yaml deploy/helm/dead-drop/values.local.
 # edit host, tls secret name, image.tag
 ```
 
+Ingress is disabled by default and the base values contain no hostname. Set the ingress class, host paths, annotations, and TLS secret for the target cluster in the overlay. This is a Helm 3 chart; do not use the obsolete `helm init` command.
+
 Install the published chart:
 
 ```bash
