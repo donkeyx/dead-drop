@@ -108,7 +108,7 @@ jobs:
         run: |
           set -euo pipefail
           helm upgrade --install dead-drop ./deploy/helm/dead-drop \
-            -n dead-drop --create-namespace \
+            -n dead-drop \
             -f /tmp/values.production.yaml \
             --set image.repository=ghcr.io/donkeyx/dead-drop \
             --set image.tag="${VERSION}" \

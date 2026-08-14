@@ -67,6 +67,14 @@ Create the `production` environment on the repo, then add:
 | Secret | `HELM_VALUES` | Cluster overlay YAML — same shape as `values.example.yaml`. `image.tag` is set by the workflow. |
 | Variable | `SMOKE_URL` | Optional. If set (e.g. `https://drop.example.com`), the job GETs `/readyz` after the rollout. |
 
+Mint the kubeconfig once (needs cluster-admin). It can only change objects in `dead-drop`:
+
+```bash
+kubectl apply -f deploy/github-deploy-rbac.yaml
+./deploy/github-deploy-kubeconfig.sh
+# paste ~/.secure/dead-drop-github-deploy.kubeconfig into KUBECONFIG
+```
+
 `ci` Hub credentials must not be copied here. The DB URL and origin TLS stay as cluster Secrets; they are not in GitHub.
 
 Set `autoscaling.enabled=true` to enable HPA. PostgreSQL is required for multiple replicas; SQLite and filesystem storage are not supported by this chart. The application rate limiter remains per pod until a shared limiter is added.
