@@ -70,6 +70,13 @@ podDisruptionBudget:
   enabled: true
   minAvailable: 1
 
+# Deletes TTL-expired drops even if nobody Take'd them.
+expire:
+  enabled: true
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+
 securityContext:
   runAsNonRoot: true
   runAsUser: 10001

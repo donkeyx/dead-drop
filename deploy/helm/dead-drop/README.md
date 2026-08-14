@@ -82,4 +82,6 @@ kubectl apply -f deploy/github-deploy-rbac.yaml
 
 Set `autoscaling.enabled=true` to enable HPA. PostgreSQL is required for multiple replicas; SQLite and filesystem storage are not supported by this chart. The application rate limiter remains per pod until a shared limiter is added.
 
+A CronJob (`expire.enabled`, default every 5 minutes) runs `dead-drop expire` against the same database so TTL-elapsed drops are deleted even if nobody Takes them. The GitHub deploy Role must include `batch` CronJobs (see `deploy/github-deploy-rbac.yaml`).
+
 The chart includes a `/startupz` probe with a two-and-a-half-minute failure budget. The server opens the configured store and completes database migrations before it starts listening; Kubernetes waits for this probe before evaluating readiness and liveness. Startup phases are logged without logging database URLs or secret data. Override `startupProbe` in the values overlay if the target cluster needs different timing. Default resource requests are `10m` CPU and `50Mi` memory, with limits of `500m` CPU and `512Mi` memory; these defaults are based on observed steady-state usage. If enabling CPU-based HPA, revisit the target because a low CPU request makes utilization percentages sensitive to small bursts.

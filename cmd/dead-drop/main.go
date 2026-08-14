@@ -27,6 +27,8 @@ func main() {
 		code = cmdOpen(os.Args[2:])
 	case "serve":
 		code = cmdServe(os.Args[2:])
+	case "expire":
+		code = cmdExpire(os.Args[2:])
 	case "put":
 		code = cmdPut(os.Args[2:])
 	case "get":
@@ -54,6 +56,7 @@ Usage:
   dead-drop put   [flags]   # seal + upload; prints share link with #key
   dead-drop get   URL       # download + decrypt
   dead-drop serve [flags]
+  dead-drop expire [flags]  # delete TTL-expired drops
   dead-drop version
 
 Examples:
