@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Image version (0.1.0 or v0.1.0)
+        description: Semver tag only (0.1.1 or v0.1.1). sha-* / latest / master are rejected.
         required: true
         type: string
 
@@ -39,12 +39,18 @@ jobs:
             echo "::error::version is empty"
             exit 1
           fi
+          if ! printf '%s' "${ver}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$'; then
+            echo "::error::Deploy only tagged releases (got ${raw}). Use v0.1.1, not sha-* / latest / master."
+            exit 1
+          fi
           echo "version=${ver}" >> "$GITHUB_OUTPUT"
           echo "ref=v${ver}" >> "$GITHUB_OUTPUT"
           echo "Deploying v${ver}"
 
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.ver.outputs.ref }}
 
       - name: Set up Helm
         uses: azure/setup-helm@v5
