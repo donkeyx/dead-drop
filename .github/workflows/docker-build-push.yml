@@ -97,7 +97,30 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           repository: donkeyx/dead-drop
+          short-description: ${{ github.event.repository.description }}
           readme-filepath: ./README.md
+          enable-url-completion: true
+
+      - name: Set Docker Hub categories
+        if: github.event_name != 'pull_request' && vars.DOCKERHUB_USERNAME != ''
+        continue-on-error: true
+        env:
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          token="$(
+            curl -sS -X POST https://hub.docker.com/v2/users/login/ \
+              -H 'Content-Type: application/json' \
+              -d "{\"username\":\"${DOCKERHUB_USERNAME}\",\"password\":\"${DOCKERHUB_TOKEN}\"}" \
+              | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])'
+          )"
+          curl -sS -f -X PATCH https://hub.docker.com/v2/repositories/donkeyx/dead-drop/ \
+            -H "Authorization: JWT ${token}" \
+            -H 'Content-Type: application/json' \
+            -d '{"categories":[{"slug":"security"},{"slug":"developer-tools"}]}'
+          echo
+          echo "Set Hub categories: security, developer-tools"
 
   helm:
     name: Helm chart
