@@ -28,11 +28,7 @@ ingress:
   enabled: false
   className: ""
   annotations: {}
-  hosts:
-    - host: dead-drop.example.com
-      paths:
-        - path: /
-          pathType: Prefix
+  hosts: []
   tls: []
 
 autoscaling:
@@ -43,11 +39,21 @@ autoscaling:
 
 resources:
   requests:
-    cpu: 50m
-    memory: 128Mi
+    cpu: 10m
+    memory: 50Mi
   limits:
     cpu: 500m
     memory: 512Mi
+
+startupProbe:
+  httpGet:
+    path: /startupz
+    port: http
+  initialDelaySeconds: 0
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 30
+  successThreshold: 1
 
 podDisruptionBudget:
   enabled: true

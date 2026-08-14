@@ -28,6 +28,6 @@
 
 ## Current Scope
 
-- PR1-PR6 are complete: SEAL library, offline CLI, FS/SQLite stores, HTTP API, network put/get, and WASM crypto/vector harness.
-- PR7 is the browser UI slice: server-rendered create/reveal shells plus same-origin static JS around the existing client-side WASM crypto. If HTMX is added later for non-sensitive chrome, it must never submit plaintext, fragment keys, or passphrases.
+- PR1–PR7 are complete: SEAL library, offline CLI, FS/SQLite/Postgres stores, HTTP API, network put/get, WASM crypto/vector harness, and the browser create/reveal/`/about` UI.
+- Helm + GHCR/Docker Hub publish is the v0.1.0 deploy path. If HTMX is added later for non-sensitive chrome, it must never submit plaintext, fragment keys, or passphrases.
 - The design and README are the source of product/security constraints; preserve their wording around “client-side encrypted” and avoid unqualified “zero-knowledge” claims.

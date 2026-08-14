@@ -64,6 +64,8 @@ spec:
               port: http
             initialDelaySeconds: 10
             periodSeconds: 20
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       nodeSelector:

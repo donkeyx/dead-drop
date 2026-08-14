@@ -9,6 +9,8 @@ https://your.host/s/<id>#<key>
 
 ## Status
 
+**v0.1.0** — first tagged release. Public instance: [drop.donkeyx.dev](https://drop.donkeyx.dev/).
+
 | Piece | State |
 |-------|--------|
 | **Design** | [DESIGN.md](DESIGN.md) |
@@ -18,7 +20,8 @@ https://your.host/s/<id>#<key>
 | **PR4 — HTTP API** | done (`server/`, `dead-drop serve`) |
 | **PR5 — network put/get** | done |
 | **PR6 — WASM crypto** | done (`make wasm` / `make wasm-test`) |
-| **PR7 — browser UI shell** | in progress (create/reveal pages, same-origin JS/WASM) |
+| **PR7 — browser UI** | done (create/reveal, `/about`, same-origin WASM) |
+| **Postgres + Helm** | done (replicas, GHCR + Docker Hub images) |
 
 ## CLI (offline)
 
@@ -62,6 +65,8 @@ curl -sS -X POST http://127.0.0.1:8080/api/v1/secrets \
 
 No CORS. Fragment keys never go to the server.
 
+The server exposes `GET /healthz`, `GET /startupz`, and `GET /readyz` for container orchestration. Store initialization, PostgreSQL connectivity, and migrations complete before the server starts listening; startup logs describe those phases without logging database URLs or secret data.
+
 ## Browser WASM
 
 ```bash
@@ -95,6 +100,8 @@ make wasm
 
 The browser encrypts before `POST /api/v1/secrets`; the fragment key is never sent to the server. Text and small files up to 16 MiB are supported, with files downloaded using their encrypted filename and content type. Reveal pages clear the fragment from the visible address bar on first use, but burn-after-read still consumes the drop when the ciphertext is fetched.
 
+The UI includes a trust page at `/about`, passphrase visibility controls, optional secret-text masking, burn-after-read controls, and copied-link feedback. The trust page explains the encryption boundary and why self-hosting is the correct option when the hosted instance is not trusted.
+
 ## Deployment storage
 
 SQLite and filesystem storage are single-writer backends for one replica with one local data directory. Use `DEADDROP_STORE=postgres` with `DEADDROP_DATABASE_URL` before running multiple replicas or enabling Kubernetes HPA. PostgreSQL keeps burn-after-read `Take` atomic across replicas; the database must be reachable by every pod and protected with TLS and normal secret management.
@@ -105,7 +112,14 @@ The current rate limiter is in-memory and therefore per-pod. PostgreSQL makes se
 
 The chart at `deploy/helm/dead-drop` deploys stateless replicas backed by an external PostgreSQL database. It includes readiness/liveness probes, a PodDisruptionBudget, optional HPA, Ingress support, non-root security settings, and a Secret reference for `DEADDROP_DATABASE_URL`.
 
-CI publishes `ghcr.io/donkeyx/dead-drop` and `oci://ghcr.io/donkeyx/charts/dead-drop` from `master` and `v*` tags. See [deploy/helm/dead-drop/README.md](deploy/helm/dead-drop/README.md).
+CI publishes `ghcr.io/donkeyx/dead-drop`, `docker.io/donkeyx/dead-drop`, and `oci://ghcr.io/donkeyx/charts/dead-drop` from `master` and `v*` tags. Pull either image:
+
+```bash
+docker pull ghcr.io/donkeyx/dead-drop:0.1.0
+docker pull docker.io/donkeyx/dead-drop:0.1.0
+```
+
+See [deploy/helm/dead-drop/README.md](deploy/helm/dead-drop/README.md).
 
 ```bash
 kubectl create secret generic dead-drop-db \
@@ -118,6 +132,8 @@ helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
   -n dead-drop --create-namespace \
   -f deploy/helm/dead-drop/values.local.yaml
 ```
+
+The chart defaults to two stateless replicas, PostgreSQL storage, non-root execution, resource requests/limits, startup/readiness/liveness probes, a PodDisruptionBudget, and optional HPA. Ingress is disabled until a cluster-specific host, class, annotations, and TLS secret are supplied in the values overlay. The chart never creates the database or its Secret.
 
 ## Library (PR1)
 
@@ -153,11 +169,13 @@ make build
 
 **Not magic:** if you host the web UI, users still trust the code you serve. XSS or a malicious deploy can steal keys. Offline CLI encrypt is the paranoia path (PR2).
 
-## Stack (planned)
+If you do not trust the hosted instance, run the server yourself from this repository. The server cannot decrypt stored drops, but a compromised deployment could serve modified browser JavaScript and capture plaintext or fragment keys before encryption. The offline CLI avoids that hosted-browser trust boundary entirely.
 
-- Go library (SEAL v1) + CLI
-- Go **WASM** browser crypto (same code)
-- HTMX UI chrome only
+## Stack
+
+- Go library (SEAL v1) + CLI + stdlib HTTP server
+- Go **WASM** browser crypto (same code, same-origin UI)
+- Helm chart; images on GHCR and Docker Hub
 - MIT
 
 ## License

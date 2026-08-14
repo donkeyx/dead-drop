@@ -6,7 +6,7 @@ Published artifacts (from `master` and `v*` tags):
 
 | Kind | Location |
 |------|----------|
-| Image | `ghcr.io/donkeyx/dead-drop` (`latest`, `sha-<git>`, semver on tags) |
+| Images | `ghcr.io/donkeyx/dead-drop` and `docker.io/donkeyx/dead-drop` (`latest`, `sha-<git>`, semver on tags) |
 | Chart | `oci://ghcr.io/donkeyx/charts/dead-drop` |
 
 Create the namespace (optional if you pass `--create-namespace`) and the database URL Secret separately. The chart does not create either.
@@ -23,6 +23,8 @@ Cluster-specific image tag, database secret name, and ingress live in a values o
 cp deploy/helm/dead-drop/values.example.yaml deploy/helm/dead-drop/values.local.yaml
 # edit host, tls secret name, image.tag
 ```
+
+Ingress is disabled by default and the base values contain no hostname. Set the ingress class, host paths, annotations, and TLS secret for the target cluster in the overlay. This is a Helm 3 chart; do not use the obsolete `helm init` command.
 
 Install the published chart:
 
@@ -41,6 +43,16 @@ helm upgrade --install dead-drop ./deploy/helm/dead-drop \
   -f deploy/helm/dead-drop/values.local.yaml
 ```
 
+To pull the image from Docker Hub instead of GHCR, set this in the overlay:
+
+```yaml
+image:
+  repository: docker.io/donkeyx/dead-drop
+  tag: "0.1.0"
+```
+
 If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[0].name=ghcr-pull-secret`.
 
 Set `autoscaling.enabled=true` to enable HPA. PostgreSQL is required for multiple replicas; SQLite and filesystem storage are not supported by this chart. The application rate limiter remains per pod until a shared limiter is added.
+
+The chart includes a `/startupz` probe with a two-and-a-half-minute failure budget. The server opens the configured store and completes database migrations before it starts listening; Kubernetes waits for this probe before evaluating readiness and liveness. Startup phases are logged without logging database URLs or secret data. Override `startupProbe` in the values overlay if the target cluster needs different timing. Default resource requests are `10m` CPU and `50Mi` memory, with limits of `500m` CPU and `512Mi` memory; these defaults are based on observed steady-state usage. If enabling CPU-based HPA, revisit the target because a low CPU request makes utilization percentages sensitive to small bursts.

@@ -53,6 +53,7 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("GET /static/", http.StripPrefix("/static/", staticFiles(http.Dir(s.cfg.StaticDir))))
 	mux.HandleFunc("GET /favicon.ico", s.handleFavicon)
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
+	mux.HandleFunc("GET /startupz", s.handleStartupz)
 	mux.HandleFunc("GET /readyz", s.handleReadyz)
 	mux.HandleFunc("POST /api/v1/secrets", s.handleCreate)
 	mux.HandleFunc("GET /api/v1/secrets/{id}", s.handleGet)
@@ -242,6 +243,12 @@ func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("ok\n"))
+}
+
+func (s *Server) handleStartupz(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("started\n"))
 }
 
 func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
