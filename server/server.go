@@ -192,7 +192,7 @@ const uiShell = `<!doctype html>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
   <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
-  <link rel="stylesheet" href="/static/skin.css?v=2">
+  <link rel="stylesheet" href="/static/skin.css?v=3">
 </head>
 <body>
   <div class="wrap">
@@ -257,7 +257,7 @@ const aboutPage = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How dead-drop works</title>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
-  <link rel="stylesheet" href="/static/skin.css?v=2">
+  <link rel="stylesheet" href="/static/skin.css?v=3">
 </head>
 <body>
   <div class="wrap info-page">

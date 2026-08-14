@@ -223,8 +223,13 @@ output strong {
 }
 
 .link-row { display: flex; gap: 0.5rem; align-items: stretch; }
-.link-row input { min-width: 0; font: 0.82rem/1.4 ui-monospace, monospace; }
-.link-row button { margin-top: 0; }
+.link-row input { flex: 1 1 auto; min-width: 0; font: 0.82rem/1.4 ui-monospace, monospace; }
+.link-row button {
+  margin-top: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-width: 5.25rem;
+}
 
 output pre {
   margin: 0;
