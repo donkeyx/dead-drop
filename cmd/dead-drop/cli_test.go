@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/donkeyx/dead-drop/blob"
+	"github.com/donkeyx/dead-drop/store"
 )
 
 // Ensures the built CLI opens PR1 golden vectors byte-identically.
@@ -128,6 +131,49 @@ func findModuleRoot(t *testing.T) string {
 			t.Fatal("go.mod not found")
 		}
 		dir = parent
+	}
+}
+
+func TestCLIExpire(t *testing.T) {
+	bin := buildCLI(t)
+	dir := t.TempDir()
+	st, err := store.OpenSQLite(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	if err := st.Create(ctx, store.Meta{
+		ID: "exp1", CreatedAt: time.Now().UTC().Add(-time.Hour),
+		ExpiresAt: time.Now().UTC().Add(-time.Minute), FormatVersion: 1,
+	}, []byte("old")); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.Create(ctx, store.Meta{
+		ID: "live1", CreatedAt: time.Now().UTC(),
+		ExpiresAt: time.Now().UTC().Add(time.Hour), FormatVersion: 1,
+	}, []byte("new")); err != nil {
+		t.Fatal(err)
+	}
+	if err := st.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := exec.Command(bin, "expire", "-store", "sqlite", "-data", dir)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("expire: %v\n%s", err, out)
+	}
+
+	st, err = store.OpenSQLite(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = st.Close() })
+	n, err := st.Count(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Fatalf("count %d want 1", n)
 	}
 }
 
