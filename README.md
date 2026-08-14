@@ -18,6 +18,8 @@ A dead drop for secrets. The browser (or CLI) encrypts **before** upload. The ke
 
 Handy when a password-manager share isn't an option — an API token, a private key, a small kubeconfig — or you just need to move a secret between your own devices. Don't paste it into Slack or Discord and use the channel as a clipboard; those histories keep a copy. Burn-after-read and a short TTL are on by default so the drop doesn't hang around.
 
+Don't want to run anything? Use **[drop.donkeyx.dev](https://drop.donkeyx.dev/)** in the browser. Self-host if you don't want to trust this origin (see [Not magic](#not-magic)).
+
 ```
 https://your.host/s/<id>#<key>
          ↑ server knows id     ↑ never sent to the server
@@ -37,7 +39,7 @@ Same donkey stable as [tcp-wait](https://github.com/donkeyx/tcp-wait) / [cluster
 
 ## Leave a drop
 
-**Browser:** open the hosted instance or your own, type a secret or attach a file (max 16 MiB), copy the link. Encryption runs in WASM in the page. The server response is an id and path only — no fragment key.
+**Browser:** [drop.donkeyx.dev](https://drop.donkeyx.dev/) — type a secret or attach a file (max 16 MiB), copy the link. Same UI if you self-host. Encryption runs in WASM in the page. The server response is an id and path only — no fragment key.
 
 **CLI** (seal offline, or put over the network):
 
