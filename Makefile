@@ -1,4 +1,4 @@
-.PHONY: test tidy build wasm wasm-test vectors generate-vectors
+.PHONY: test tidy build wasm wasm-test vectors generate-vectors test-browser-container
 
 test:
 	go test ./...
@@ -29,3 +29,7 @@ generate-vectors:
 	GENERATE_VECTORS=1 go test ./blob/ -run TestGenerateVectors -count=1
 
 vectors: generate-vectors test
+
+# Same image as CI Browser UI / live smoke. Use this before pushing workflow changes.
+test-browser-container:
+	./scripts/test-browser-container.sh

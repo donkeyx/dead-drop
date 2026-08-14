@@ -15,6 +15,7 @@
 - Run `make vectors` after changing the normative blob implementation or golden vectors; it regenerates vectors and then runs all tests.
 - Run `make wasm-test` to rebuild the WASM module and run the Node golden-vector interop harness. It requires `make`, Node, and a Go toolchain with JS/WASM support.
 - Run `gofmt` on changed Go files. There is no separate repository lint configuration.
+- Before pushing CI or Playwright workflow changes, run `make test-browser-container` (podman or docker). That is the official `mcr.microsoft.com/playwright` image pinned to `@playwright/test`. Do not iterate those jobs on GitHub Actions first. The image has Chromium and bash, but not `make`; set `GOFLAGS=-buildvcs=false` for `go build` / `go run` inside it.
 - Passphrases must come from an environment variable or prompt, never command-line arguments; avoid logging plaintext, keys, fragments, passphrases, or raw blobs.
 
 ## Security And Deployment Constraints
