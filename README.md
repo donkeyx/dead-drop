@@ -112,7 +112,7 @@ The current rate limiter is in-memory and therefore per-pod. PostgreSQL makes se
 
 The chart at `deploy/helm/dead-drop` deploys stateless replicas backed by an external PostgreSQL database. It includes readiness/liveness probes, a PodDisruptionBudget, optional HPA, Ingress support, non-root security settings, and a Secret reference for `DEADDROP_DATABASE_URL`.
 
-CI publishes `ghcr.io/donkeyx/dead-drop`, `docker.io/donkeyx/dead-drop`, and `oci://ghcr.io/donkeyx/charts/dead-drop` from `master` and `v*` tags. Pull either image:
+CI publishes `ghcr.io/donkeyx/dead-drop`, `docker.io/donkeyx/dead-drop`, and `oci://ghcr.io/donkeyx/charts/dead-drop` from `master` and `v*` tags. Hub credentials live on the `ci` environment (`DOCKERHUB_USERNAME` variable + `DOCKERHUB_TOKEN` secret). Pull either image:
 
 ```bash
 docker pull ghcr.io/donkeyx/dead-drop:0.1.0
