@@ -6,6 +6,7 @@
   const maxPlaintextBytes = 16 * 1024 * 1024;
   const turnstileSiteKey = document.documentElement.dataset.turnstileSitekey || "";
   let turnstileWidget = null;
+  let turnstileWait = null;
 
   function setMessage(node, message, state = "error") {
     node.replaceChildren(document.createTextNode(message));
@@ -167,17 +168,57 @@
     if (!turnstileSiteKey) return;
     const box = byId("cf-turnstile");
     if (box) box.hidden = false;
+    const note = byId("turnstile-note");
+    if (note) note.hidden = false;
     await loadTurnstile();
     if (turnstileWidget !== null) return;
-    turnstileWidget = window.turnstile.render("#cf-turnstile", { sitekey: turnstileSiteKey });
+    turnstileWidget = window.turnstile.render("#cf-turnstile", {
+      sitekey: turnstileSiteKey,
+      theme: "dark",
+      size: "flexible",
+      appearance: "interaction-only",
+      callback: (token) => {
+        if (turnstileWait) {
+          turnstileWait.resolve(token);
+          turnstileWait = null;
+        }
+      },
+      "error-callback": () => {
+        if (turnstileWait) {
+          turnstileWait.reject(new Error("Human check failed."));
+          turnstileWait = null;
+        }
+      },
+      "expired-callback": () => {
+        if (window.turnstile && turnstileWidget !== null) window.turnstile.reset(turnstileWidget);
+      }
+    });
   }
 
   async function turnstileToken() {
     if (!turnstileSiteKey) return "";
     await setupTurnstile();
-    const token = window.turnstile.getResponse(turnstileWidget);
-    if (!token) throw new Error("Complete the human check first.");
-    return token;
+    const existing = window.turnstile.getResponse(turnstileWidget);
+    if (existing) return existing;
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        if (turnstileWait) {
+          turnstileWait = null;
+          reject(new Error("Human check timed out."));
+        }
+      }, 30_000);
+      turnstileWait = {
+        resolve: (token) => {
+          clearTimeout(timer);
+          resolve(token);
+        },
+        reject: (err) => {
+          clearTimeout(timer);
+          reject(err);
+        }
+      };
+      window.turnstile.execute(turnstileWidget);
+    });
   }
 
   byId("create-form")?.addEventListener("submit", createDrop);
