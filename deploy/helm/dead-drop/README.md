@@ -65,8 +65,9 @@ Create the `production` environment on the repo, then add:
 |------|------|--------|
 | Secret | `KUBECONFIG` | Deploy-only kubeconfig YAML (not a laptop admin file) |
 | Secret | `HELM_VALUES` | Cluster overlay YAML — same shape as `values.example.yaml`. `image.tag` is set by the workflow. |
+| Variable | `SMOKE_URL` | Public origin, e.g. `https://drop.donkeyx.dev`. After rollout, Playwright creates, opens, and burns a dummy drop. |
 
-Smoke hits `/readyz` through `kubectl port-forward` to the in-cluster Service. Do not curl the public hostname from GitHub — Cloudflare Bot Fight returns 403 to that UA. `SMOKE_URL` is unused.
+Ready is the chart's `/readyz` probe plus `helm --wait` and `kubectl rollout status`. Then the job prints pod/event status and runs the live browser smoke. On failure it dumps events, logs, and a Playwright trace.
 
 Mint the kubeconfig once (needs cluster-admin). It can only change objects in `dead-drop`:
 
