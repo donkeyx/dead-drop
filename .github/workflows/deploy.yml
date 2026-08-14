@@ -111,6 +111,7 @@ jobs:
             --set image.repository=ghcr.io/donkeyx/dead-drop \
             --set image.tag="${VERSION}" \
             --set image.pullPolicy=IfNotPresent \
+            --set-string podAnnotations.deployRun="${GITHUB_RUN_ID}" \
             --wait --timeout 5m
           kubectl -n dead-drop rollout status deploy/dead-drop --timeout=180s
 

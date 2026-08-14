@@ -5,6 +5,8 @@ image:
 
 imagePullSecrets: []
 
+podAnnotations: {}
+
 replicaCount: 2
 
 service:
