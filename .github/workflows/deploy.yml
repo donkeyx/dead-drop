@@ -1,0 +1,128 @@
+name: Deploy
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Image version (0.1.0 or v0.1.0)
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    name: Helm upgrade
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Resolve version
+        id: ver
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            raw="${{ inputs.version }}"
+          else
+            raw="${GITHUB_REF_NAME}"
+          fi
+          ver="${raw#v}"
+          if [ -z "${ver}" ]; then
+            echo "::error::version is empty"
+            exit 1
+          fi
+          echo "version=${ver}" >> "$GITHUB_OUTPUT"
+          echo "ref=v${ver}" >> "$GITHUB_OUTPUT"
+          echo "Deploying v${ver}"
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.ver.outputs.ref }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v3.16.4
+
+      - name: Set up kubeconfig
+        env:
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KUBECONFIG_DATA}" ]; then
+            echo "::error::Set production secret KUBECONFIG to a deploy-only kubeconfig."
+            exit 1
+          fi
+          mkdir -p "${HOME}/.kube"
+          printf '%s\n' "${KUBECONFIG_DATA}" > "${HOME}/.kube/config"
+          chmod 600 "${HOME}/.kube/config"
+
+      - name: Write Helm overlay
+        env:
+          HELM_VALUES: ${{ secrets.HELM_VALUES }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HELM_VALUES}" ]; then
+            echo "::error::Set production secret HELM_VALUES to the cluster overlay YAML (no image.tag required)."
+            exit 1
+          fi
+          printf '%s\n' "${HELM_VALUES}" > /tmp/values.production.yaml
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Wait for image
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/donkeyx/dead-drop:${VERSION}"
+          echo "Waiting for ${image}"
+          for i in $(seq 1 40); do
+            if docker manifest inspect "${image}" >/dev/null 2>&1; then
+              echo "Image is published"
+              exit 0
+            fi
+            echo "not ready yet (${i}/40)"
+            sleep 15
+          done
+          echo "::error::Timed out waiting for ${image}"
+          exit 1
+
+      - name: Helm upgrade
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          helm upgrade --install dead-drop ./deploy/helm/dead-drop \
+            -n dead-drop --create-namespace \
+            -f /tmp/values.production.yaml \
+            --set image.repository=ghcr.io/donkeyx/dead-drop \
+            --set image.tag="${VERSION}" \
+            --set image.pullPolicy=IfNotPresent \
+            --wait --timeout 5m
+          kubectl -n dead-drop rollout status deploy/dead-drop --timeout=180s
+
+      - name: Smoke ready
+        if: ${{ vars.SMOKE_URL != '' }}
+        env:
+          SMOKE_URL: ${{ vars.SMOKE_URL }}
+        run: |
+          set -euo pipefail
+          url="${SMOKE_URL%/}/readyz"
+          echo "GET ${url}"
+          curl -fsS --retry 8 --retry-delay 3 --retry-all-errors "${url}"
+          echo
