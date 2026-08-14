@@ -116,20 +116,11 @@ jobs:
             --wait --timeout 5m
           kubectl -n dead-drop rollout status deploy/dead-drop --timeout=180s
 
-      - name: Smoke ready
+      - name: Cluster debug
+        if: failure()
         run: |
-          set -euo pipefail
-          # Hit the in-cluster Service. Cloudflare Bot Fight 403s GitHub IPs on the public host.
-          kubectl -n dead-drop port-forward svc/dead-drop 18080:8080 >/tmp/pf.log 2>&1 &
-          pf=$!
-          trap 'kill "${pf}" 2>/dev/null || true' EXIT
-          for i in $(seq 1 20); do
-            if curl -fsS --max-time 2 http://127.0.0.1:18080/readyz; then
-              echo
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "::error::in-cluster /readyz failed"
-          cat /tmp/pf.log || true
-          exit 1
+          kubectl -n dead-drop get deploy,rs,pods,svc,ingress -o wide || true
+          echo "==== events ===="
+          kubectl -n dead-drop get events --sort-by='.lastTimestamp' || true
+          echo "==== logs ===="
+          kubectl -n dead-drop logs deploy/dead-drop --tail=80 || true

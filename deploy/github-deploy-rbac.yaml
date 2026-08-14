@@ -57,9 +57,6 @@ rules:
     resources: ["pods", "pods/log", "services", "events"]
     verbs: ["get", "list", "watch"]
   - apiGroups: [""]
-    resources: ["pods/portforward"]
-    verbs: ["create"]
-  - apiGroups: [""]
     resources: ["services"]
     verbs: ["create", "update", "patch", "delete"]
   # Helm stores releases as Secrets in the namespace.
