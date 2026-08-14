@@ -45,8 +45,6 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          ref: ${{ steps.ver.outputs.ref }}
 
       - name: Set up Helm
         uses: azure/setup-helm@v5
@@ -115,6 +113,37 @@ jobs:
             --set image.pullPolicy=IfNotPresent \
             --wait --timeout 5m
           kubectl -n dead-drop rollout status deploy/dead-drop --timeout=180s
+
+      - name: Post-roll status
+        run: |
+          kubectl -n dead-drop get deploy,pods,svc -o wide
+          echo "==== recent events ===="
+          kubectl -n dead-drop get events --sort-by='.lastTimestamp' | tail -20
+
+      - name: Set up Node
+        if: ${{ vars.SMOKE_URL != '' }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Live Playwright smoke
+        if: ${{ vars.SMOKE_URL != '' }}
+        env:
+          SMOKE_URL: ${{ vars.SMOKE_URL }}
+        run: |
+          set -euo pipefail
+          npm ci
+          npx playwright install --with-deps chromium
+          npx playwright test --config playwright.smoke.config.js
+
+      - name: Upload smoke trace
+        if: ${{ failure() && vars.SMOKE_URL != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-trace
+          path: test-results/
+          if-no-files-found: ignore
 
       - name: Cluster debug
         if: failure()

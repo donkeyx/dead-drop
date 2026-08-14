@@ -2,7 +2,8 @@
   "name": "dead-drop-browser-tests",
   "private": true,
   "scripts": {
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "test:smoke": "playwright test --config playwright.smoke.config.js"
   },
   "devDependencies": {
     "@playwright/test": "1.62.1"
