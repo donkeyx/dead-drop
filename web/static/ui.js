@@ -57,7 +57,11 @@
         filename: file ? file.name : "",
         contentType: file ? (file.type || "application/octet-stream") : "text/plain; charset=utf-8"
       });
-      const headers = { "Content-Type": "application/octet-stream", "X-Seal-Burn": byId("burn").checked ? "1" : "0" };
+      const headers = {
+        "Content-Type": "application/octet-stream",
+        "X-Seal-Burn": byId("burn").checked ? "1" : "0",
+        "X-Seal-TTL": byId("ttl")?.value || "24h"
+      };
       const token = await turnstileToken();
       if (token) headers["CF-Turnstile-Response"] = token;
       const response = await fetch("/api/v1/secrets", {
@@ -101,7 +105,17 @@
         }
       });
       row.append(linkInput, copy);
-      result.append(label, row);
+      const meta = document.createElement("p");
+      meta.className = "muted keep-meta";
+      const parts = [];
+      if (created.burn_after_read) parts.push("Burns after first download.");
+      else parts.push("Does not burn after download.");
+      if (created.expires_at) {
+        const when = new Date(created.expires_at);
+        parts.push("Unused after " + when.toISOString().slice(0, 16).replace("T", " ") + " UTC.");
+      }
+      meta.textContent = parts.join(" ");
+      result.append(label, row, meta);
       byId("secret").value = "";
       byId("file").value = "";
       byId("passphrase").value = "";

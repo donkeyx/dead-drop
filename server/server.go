@@ -192,7 +192,7 @@ const uiShell = `<!doctype html>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
   <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
-  <link rel="stylesheet" href="/static/skin.css?v=4">
+  <link rel="stylesheet" href="/static/skin.css?v=5">
 </head>
 <body>
   <div class="wrap">
@@ -223,7 +223,16 @@ const uiShell = `<!doctype html>
             <input id="passphrase" name="passphrase" type="password" autocomplete="off">
             <button class="visibility-toggle" type="button" data-toggle-visibility="passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
           </div>
-          <label><input id="burn" type="checkbox" checked> Burn after first download</label>
+          <div class="keep-row">
+            <label><input id="burn" type="checkbox" checked> Burn after first download</label>
+            <label class="ttl-label" for="ttl">Delete unused after
+              <select id="ttl">
+                <option value="1h">1 hour</option>
+                <option value="24h" selected>24 hours</option>
+                <option value="168h">7 days</option>
+              </select>
+            </label>
+          </div>
           <div id="cf-turnstile" class="turnstile" hidden></div>
           <p class="muted turnstile-note" id="turnstile-note" hidden>Create is checked by Cloudflare. The secret is already encrypted in this browser.</p>
           <button class="primary-action" type="submit">Create encrypted link</button>
@@ -246,7 +255,7 @@ const uiShell = `<!doctype html>
   </div>
   <script src="/static/wasm_exec.js"></script>
   <script src="/static/deaddrop.js"></script>
-  <script src="/static/ui.js?v=3"></script>
+  <script src="/static/ui.js?v=4"></script>
 </body>
 </html>`
 
@@ -257,7 +266,7 @@ const aboutPage = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How dead-drop works</title>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
-  <link rel="stylesheet" href="/static/skin.css?v=4">
+  <link rel="stylesheet" href="/static/skin.css?v=5">
 </head>
 <body>
   <div class="wrap info-page">

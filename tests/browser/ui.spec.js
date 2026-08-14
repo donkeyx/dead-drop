@@ -13,6 +13,7 @@ test("creates and reveals a burn-after-read text drop", async ({ page, browser }
 
   const link = page.locator("input[aria-label='Share link']");
   await expect(link).toHaveValue(/#.+/);
+  await expect(page.locator(".keep-meta")).toContainText(/Unused after/);
   const shareURL = await link.inputValue();
 
   const recipient = await browser.newPage();
