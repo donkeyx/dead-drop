@@ -304,6 +304,15 @@ func TestUIHeadersAndShell(t *testing.T) {
 	}
 }
 
+func TestAboutPage(t *testing.T) {
+	srv, _ := testServer(t)
+	rr := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/about", nil))
+	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("How it works")) {
+		t.Fatalf("about response: %d %s", rr.Code, rr.Body.String())
+	}
+}
+
 func TestStaticAssetCacheHeaders(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.WriteFile(filepath.Join(dir, "skin.css"), []byte("body{}"), 0o644); err != nil {
