@@ -154,14 +154,16 @@ const uiShell = `<!doctype html>
         <h2>Leave a drop</h2>
         <form id="create-form">
           <label for="secret">Secret or small file</label>
-          <textarea id="secret" name="secret" autocomplete="off" maxlength="16777216"></textarea>
-          <label for="file">Or choose a small file</label>
-          <input id="file" type="file" accept="*/*">
-          <p class="muted">Encrypted in this browser. Never uploaded as plaintext. Maximum 16 MiB.</p>
+          <textarea id="secret" name="secret" autocomplete="off" maxlength="16777216" placeholder="Type a secret message..."></textarea>
+          <div class="file-pick">
+            <label for="file">Or attach a small file</label>
+            <input id="file" type="file" accept="*/*">
+          </div>
+          <p class="muted"><span class="lock-mark" aria-hidden="true">◆</span> Encrypted in this browser. Never uploaded as plaintext. Maximum 16 MiB.</p>
           <label for="passphrase">Optional passphrase</label>
           <input id="passphrase" name="passphrase" type="password" autocomplete="off">
           <label><input id="burn" type="checkbox" checked> Burn after first download</label>
-          <button type="submit">Create encrypted link</button>
+          <button class="primary-action" type="submit">Create encrypted link</button>
         </form>
         <output id="create-result" aria-live="polite"></output>
       </section>

@@ -109,6 +109,19 @@ textarea, input[type="text"], input[type="password"], input[type="file"] {
   color: inherit;
 }
 
+textarea::placeholder { color: #716d5d; }
+
+.file-pick {
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.35rem;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.file-pick label { margin-top: 0; }
+.file-pick input[type="file"] { padding: 0.55rem; }
+
 textarea {
   min-height: 9rem;
   resize: vertical;
@@ -150,6 +163,8 @@ button {
   cursor: pointer;
 }
 
+.primary-action { min-width: 15rem; box-shadow: 0 6px 18px rgba(212, 160, 23, 0.14); }
+
 button:hover:not(:disabled) { filter: brightness(1.08); }
 button:disabled { opacity: 0.65; cursor: wait; }
 
@@ -166,6 +181,15 @@ output {
   display: block;
   margin-top: 1rem;
   overflow-wrap: anywhere;
+}
+
+output.error { color: var(--warn); }
+output.progress { color: var(--muted); }
+output.success {
+  padding: 0.8rem;
+  border: 1px solid rgba(183, 201, 106, 0.45);
+  border-radius: 0.35rem;
+  background: rgba(183, 201, 106, 0.06);
 }
 
 output strong {
@@ -196,6 +220,8 @@ output a {
   font-weight: 650;
 }
 
+.lock-mark { color: var(--brass); font-size: 0.7em; }
+
 .foot {
   margin-top: 1.4rem;
   color: var(--muted);
@@ -207,7 +233,11 @@ output a {
 [hidden] { display: none !important; }
 
 @media (max-width: 520px) {
+  .wrap { width: min(100% - 1rem, 36rem); padding-top: 1.25rem; }
   .brand { gap: 0.8rem; }
   .brand img { width: 4.25rem; height: 4.25rem; }
   .brand h1 { font-size: 1.4rem; letter-spacing: 0.1em; }
+  .primary-action { width: 100%; }
+  .link-row { flex-wrap: wrap; }
+  .link-row button { width: 100%; }
 }

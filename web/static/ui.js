@@ -5,8 +5,9 @@
   const apiPath = () => "/api/v1/secrets/" + encodeURIComponent(location.pathname.split("/").pop());
   const maxPlaintextBytes = 16 * 1024 * 1024;
 
-  function setMessage(node, message) {
+  function setMessage(node, message, state = "error") {
     node.replaceChildren(document.createTextNode(message));
+    node.className = state;
   }
 
   function setBusy(button, busy, label) {
@@ -41,7 +42,7 @@
       return;
     }
     setBusy(button, true, "Encrypting...");
-    setMessage(result, "Encrypting in this browser...");
+    setMessage(result, "Encrypting in this browser...", "progress");
     try {
       const passphrase = byId("passphrase").value;
       const plaintext = file ? new Uint8Array(await file.arrayBuffer()) : new TextEncoder().encode(text);
@@ -79,10 +80,11 @@
         try {
           await copyText(link);
           copy.textContent = "Copied";
+          window.setTimeout(() => { copy.textContent = copy.dataset.label; }, 1800);
         } catch (error) {
           copy.textContent = error.message;
         }
-      }, { once: true });
+      });
       row.append(linkInput, copy);
       result.append(label, row);
       byId("secret").value = "";
@@ -102,13 +104,14 @@
     history.replaceState(null, "", location.pathname);
     const button = byId("open-drop");
     setBusy(button, true, "Opening...");
-    setMessage(result, "Downloading encrypted drop...");
+    setMessage(result, "Downloading encrypted drop...", "progress");
     try {
       const response = await fetch(apiPath(), { cache: "no-store" });
       if (!response.ok) throw new Error(response.status === 404 ? "Drop not found or already burned." : "Download failed.");
       const sealed = new Uint8Array(await response.arrayBuffer());
       const opened = await DeadDrop.decrypt(sealed, key, byId("reveal-passphrase").value);
       result.replaceChildren();
+      result.className = "success";
       if (opened.filename) {
         const download = document.createElement("a");
         const objectURL = URL.createObjectURL(new Blob([opened.plaintext], { type: opened.contentType || "application/octet-stream" }));
