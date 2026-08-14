@@ -65,7 +65,8 @@ Create the `production` environment on the repo, then add:
 |------|------|--------|
 | Secret | `KUBECONFIG` | Deploy-only kubeconfig YAML (not a laptop admin file) |
 | Secret | `HELM_VALUES` | Cluster overlay YAML — same shape as `values.example.yaml`. `image.tag` is set by the workflow. |
-| Variable | `SMOKE_URL` | Optional. If set (e.g. `https://drop.example.com`), the job GETs `/readyz` after the rollout. |
+
+Smoke hits `/readyz` through `kubectl port-forward` to the in-cluster Service. Do not curl the public hostname from GitHub — Cloudflare Bot Fight returns 403 to that UA. `SMOKE_URL` is unused.
 
 Mint the kubeconfig once (needs cluster-admin). It can only change objects in `dead-drop`:
 
