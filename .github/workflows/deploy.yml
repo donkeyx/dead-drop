@@ -103,6 +103,7 @@ jobs:
       - name: Helm upgrade
         env:
           VERSION: ${{ steps.ver.outputs.version }}
+          SMOKE_BYPASS: ${{ secrets.SMOKE_BYPASS }}
         run: |
           set -euo pipefail
           helm upgrade --install dead-drop ./deploy/helm/dead-drop \
@@ -112,6 +113,8 @@ jobs:
             --set image.tag="${VERSION}" \
             --set image.pullPolicy=IfNotPresent \
             --set-string podAnnotations.deployRun="${GITHUB_RUN_ID}" \
+            --set turnstile.existingSecret=dead-drop-turnstile \
+            --set-string env.smokeBypass="${SMOKE_BYPASS}" \
             --wait --timeout 5m
           kubectl -n dead-drop rollout status deploy/dead-drop --timeout=180s
 

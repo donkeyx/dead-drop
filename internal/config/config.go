@@ -29,26 +29,36 @@ type Config struct {
 	CreateWindow time.Duration
 	GetPerIP     int
 	GetWindow    time.Duration
+
+	// Turnstile is optional. Empty secret keeps current behaviour (self-host / CI).
+	TurnstileSiteKey   string
+	TurnstileSecret    string
+	TurnstileVerifyURL string
+	SmokeBypass        string
 }
 
 // LoadFromEnv reads DEADDROP_* with sensible defaults from DESIGN.md.
 func LoadFromEnv() (Config, error) {
 	c := Config{
-		Addr:         env("DEADDROP_ADDR", ":8080"),
-		DataDir:      env("DEADDROP_DATA", "./data"),
-		StaticDir:    env("DEADDROP_STATIC", "./web/static"),
-		Store:        strings.ToLower(env("DEADDROP_STORE", "sqlite")),
-		DatabaseURL:  env("DEADDROP_DATABASE_URL", ""),
-		MaxBytes:     envInt64("DEADDROP_MAX_BYTES", 16<<20),
-		DefaultTTL:   envDuration("DEADDROP_DEFAULT_TTL", 24*time.Hour),
-		MaxTTL:       envDuration("DEADDROP_MAX_TTL", 7*24*time.Hour),
-		MinTTL:       envDuration("DEADDROP_MIN_TTL", 5*time.Minute),
-		TrustProxy:   envBool("DEADDROP_TRUST_PROXY", false),
-		LogIDsFull:   env("DEADDROP_LOG_IDS", "truncate") == "full",
-		CreatePerIP:  20,
-		CreateWindow: 15 * time.Minute,
-		GetPerIP:     60,
-		GetWindow:    15 * time.Minute,
+		Addr:               env("DEADDROP_ADDR", ":8080"),
+		DataDir:            env("DEADDROP_DATA", "./data"),
+		StaticDir:          env("DEADDROP_STATIC", "./web/static"),
+		Store:              strings.ToLower(env("DEADDROP_STORE", "sqlite")),
+		DatabaseURL:        env("DEADDROP_DATABASE_URL", ""),
+		MaxBytes:           envInt64("DEADDROP_MAX_BYTES", 16<<20),
+		DefaultTTL:         envDuration("DEADDROP_DEFAULT_TTL", 24*time.Hour),
+		MaxTTL:             envDuration("DEADDROP_MAX_TTL", 7*24*time.Hour),
+		MinTTL:             envDuration("DEADDROP_MIN_TTL", 5*time.Minute),
+		TrustProxy:         envBool("DEADDROP_TRUST_PROXY", false),
+		LogIDsFull:         env("DEADDROP_LOG_IDS", "truncate") == "full",
+		CreatePerIP:        20,
+		CreateWindow:       15 * time.Minute,
+		GetPerIP:           60,
+		GetWindow:          15 * time.Minute,
+		TurnstileSiteKey:   env("DEADDROP_TURNSTILE_SITE_KEY", ""),
+		TurnstileSecret:    env("DEADDROP_TURNSTILE_SECRET", ""),
+		TurnstileVerifyURL: env("DEADDROP_TURNSTILE_VERIFY_URL", ""),
+		SmokeBypass:        env("DEADDROP_SMOKE_BYPASS", ""),
 	}
 	if raw := env("DEADDROP_TRUSTED_PROXIES", ""); raw != "" {
 		for _, p := range strings.Split(raw, ",") {

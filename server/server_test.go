@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -228,6 +229,77 @@ func TestRateLimit(t *testing.T) {
 	}
 	if rr.Header().Get("Retry-After") == "" {
 		t.Fatal("missing Retry-After")
+	}
+}
+
+func TestHomeTurnstileCSP(t *testing.T) {
+	srv, _ := testServer(t)
+	srv.cfg.TurnstileSiteKey = "site-key-test"
+	rr := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
+	if rr.Code != 200 {
+		t.Fatal(rr.Code)
+	}
+	csp := rr.Header().Get("Content-Security-Policy")
+	if !strings.Contains(csp, "challenges.cloudflare.com") {
+		t.Fatalf("csp=%s", csp)
+	}
+	if !strings.Contains(rr.Body.String(), `data-turnstile-sitekey="site-key-test"`) {
+		t.Fatal("missing site key on html")
+	}
+}
+
+func TestCreateRequiresTurnstile(t *testing.T) {
+	dir := t.TempDir()
+	st, err := store.OpenSQLite(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = st.Close() })
+
+	var sawToken string
+	verify := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = r.ParseForm()
+		sawToken = r.Form.Get("response")
+		ok := sawToken == "good-token"
+		_ = json.NewEncoder(w).Encode(map[string]any{"success": ok})
+	}))
+	t.Cleanup(verify.Close)
+
+	cfg := config.Config{
+		MaxBytes: 1 << 20, DefaultTTL: time.Hour, MaxTTL: 24 * time.Hour, MinTTL: time.Minute,
+		CreatePerIP: 100, CreateWindow: time.Hour, GetPerIP: 100, GetWindow: time.Hour,
+		TurnstileSiteKey: "site", TurnstileSecret: "sec", TurnstileVerifyURL: verify.URL,
+		SmokeBypass: "smoke-secret",
+	}
+	h := New(cfg, st, nil).Handler()
+	pkg := sealBlob(t)
+
+	post := func(headers map[string]string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/secrets", bytes.NewReader(pkg))
+		req.Header.Set("Content-Type", "application/octet-stream")
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+		rr := httptest.NewRecorder()
+		h.ServeHTTP(rr, req)
+		return rr
+	}
+
+	if rr := post(nil); rr.Code != http.StatusForbidden {
+		t.Fatalf("no token: want 403 got %d %s", rr.Code, rr.Body.String())
+	}
+	if rr := post(map[string]string{"CF-Turnstile-Response": "bad-token"}); rr.Code != http.StatusForbidden {
+		t.Fatalf("bad token: want 403 got %d %s", rr.Code, rr.Body.String())
+	}
+	if rr := post(map[string]string{"CF-Turnstile-Response": "good-token"}); rr.Code != http.StatusCreated {
+		t.Fatalf("good token: want 201 got %d %s", rr.Code, rr.Body.String())
+	}
+	if sawToken != "good-token" {
+		t.Fatalf("verify saw %q", sawToken)
+	}
+	if rr := post(map[string]string{"x-dead-drop-smoke": "smoke-secret"}); rr.Code != http.StatusCreated {
+		t.Fatalf("smoke bypass: want 201 got %d %s", rr.Code, rr.Body.String())
 	}
 }
 

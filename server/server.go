@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"html/template"
 	"io"
 	"log/slog"
 	"net"
@@ -18,16 +19,19 @@ import (
 	"github.com/donkeyx/dead-drop/blob"
 	"github.com/donkeyx/dead-drop/internal/config"
 	"github.com/donkeyx/dead-drop/internal/ratelimit"
+	"github.com/donkeyx/dead-drop/internal/turnstile"
 	"github.com/donkeyx/dead-drop/store"
 )
 
 // Server is the HTTP API.
 type Server struct {
-	cfg    config.Config
-	st     store.Store
-	log    *slog.Logger
-	create *ratelimit.Limiter
-	get    *ratelimit.Limiter
+	cfg       config.Config
+	st        store.Store
+	log       *slog.Logger
+	create    *ratelimit.Limiter
+	get       *ratelimit.Limiter
+	turnstile *turnstile.Client
+	ui        *template.Template
 }
 
 // New wires handlers over an open store.
@@ -35,12 +39,18 @@ func New(cfg config.Config, st store.Store, log *slog.Logger) *Server {
 	if log == nil {
 		log = slog.Default()
 	}
+	var ts *turnstile.Client
+	if cfg.TurnstileSecret != "" {
+		ts = &turnstile.Client{Secret: cfg.TurnstileSecret, VerifyURL: cfg.TurnstileVerifyURL}
+	}
 	return &Server{
-		cfg:    cfg,
-		st:     st,
-		log:    log,
-		create: ratelimit.New(cfg.CreatePerIP, cfg.CreateWindow),
-		get:    ratelimit.New(cfg.GetPerIP, cfg.GetWindow),
+		cfg:       cfg,
+		st:        st,
+		log:       log,
+		create:    ratelimit.New(cfg.CreatePerIP, cfg.CreateWindow),
+		get:       ratelimit.New(cfg.GetPerIP, cfg.GetWindow),
+		turnstile: ts,
+		ui:        template.Must(template.New("ui").Parse(uiShell)),
 	}
 }
 
@@ -64,7 +74,7 @@ func (s *Server) middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// No CORS by design.
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'")
+		w.Header().Set("Content-Security-Policy", s.contentSecurityPolicy())
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 		w.Header().Set("X-Frame-Options", "DENY")
@@ -128,8 +138,39 @@ func (w *staticCacheWriter) Write(p []byte) (int, error) {
 	return w.ResponseWriter.Write(p)
 }
 
+func (s *Server) contentSecurityPolicy() string {
+	script := "script-src 'self' 'wasm-unsafe-eval'"
+	connect := "connect-src 'self'"
+	frame := "frame-src 'none'"
+	if s.cfg.TurnstileSiteKey != "" {
+		script += " https://challenges.cloudflare.com"
+		connect += " https://challenges.cloudflare.com"
+		frame = "frame-src https://challenges.cloudflare.com"
+	}
+	return "default-src 'self'; " + script + "; style-src 'self' 'unsafe-inline'; img-src 'self' data:; " +
+		connect + "; " + frame + "; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'"
+}
+
 func (s *Server) writeShell(w http.ResponseWriter) {
-	s.writePage(w, uiShell)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_ = s.ui.Execute(w, struct{ TurnstileSiteKey string }{TurnstileSiteKey: s.cfg.TurnstileSiteKey})
+}
+
+func (s *Server) smokeBypassed(r *http.Request) bool {
+	want := s.cfg.SmokeBypass
+	return want != "" && r.Header.Get("x-dead-drop-smoke") == want
+}
+
+func (s *Server) checkCreateProof(r *http.Request, ip string) error {
+	if s.turnstile == nil || s.smokeBypassed(r) {
+		return nil
+	}
+	token := r.Header.Get("CF-Turnstile-Response")
+	if token == "" {
+		token = r.Header.Get("X-Turnstile-Token")
+	}
+	return s.turnstile.Verify(token, ip)
 }
 
 func (s *Server) writePage(w http.ResponseWriter, page string) {
@@ -139,7 +180,7 @@ func (s *Server) writePage(w http.ResponseWriter, page string) {
 }
 
 const uiShell = `<!doctype html>
-<html lang="en">
+<html lang="en" data-turnstile-sitekey="{{.TurnstileSiteKey}}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -179,6 +220,7 @@ const uiShell = `<!doctype html>
             <button class="visibility-toggle" type="button" data-toggle-visibility="passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
           </div>
           <label><input id="burn" type="checkbox" checked> Burn after first download</label>
+          <div id="cf-turnstile" class="turnstile" hidden></div>
           <button class="primary-action" type="submit">Create encrypted link</button>
         </form>
         <output id="create-result" aria-live="polite"></output>
@@ -278,6 +320,11 @@ type createResp struct {
 
 func (s *Server) handleCreate(w http.ResponseWriter, r *http.Request) {
 	ip := clientIP(r, s.cfg)
+	if err := s.checkCreateProof(r, ip); err != nil {
+		s.log.Info("create blocked by turnstile", "err", err)
+		writeErr(w, http.StatusForbidden, "human_check", "human check required")
+		return
+	}
 	if ok, retry := s.create.Allow(ip, time.Now()); !ok {
 		w.Header().Set("Retry-After", strconv.Itoa(int(retry.Seconds())+1))
 		writeErr(w, http.StatusTooManyRequests, "rate_limit", "too many creates")

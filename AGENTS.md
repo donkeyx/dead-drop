@@ -24,6 +24,7 @@
 - Burn-after-read defaults on and must remain atomic: a concurrent burn `Take` has exactly one winner, and a failed response after `Take` still consumes the drop.
 - FS/SQLite are single-writer/single-node against a local data directory. Use PostgreSQL with `DEADDROP_DATABASE_URL` for multiple replicas; PostgreSQL `Take` must retain row-lock/transaction atomicity across pods.
 - PostgreSQL does not make the in-memory rate limiter global; shared rate limiting is still a separate deployment concern for HPA.
+- Hosted create can require Cloudflare Turnstile (`DEADDROP_TURNSTILE_SECRET` + site key). Take / reveal must stay unchallenged. Empty env keeps self-host and CI unchanged. `DEADDROP_SMOKE_BYPASS` matching `x-dead-drop-smoke` skips Turnstile for live smoke.
 - Keep the no-CORS design and same-origin browser crypto boundary. The server must never receive plaintext or decrypt keys.
 - `DEADDROP_TRUST_PROXY=true` requires a non-empty trusted CIDR list; fail closed rather than trusting arbitrary forwarded headers.
 
