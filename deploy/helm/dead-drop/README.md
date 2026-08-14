@@ -6,7 +6,7 @@ Published artifacts (from `master` and `v*` tags):
 
 | Kind | Location |
 |------|----------|
-| Image | `ghcr.io/donkeyx/dead-drop` (`latest`, `sha-<git>`, semver on tags) |
+| Images | `ghcr.io/donkeyx/dead-drop` and `docker.io/donkeyx/dead-drop` (`latest`, `sha-<git>`, semver on tags) |
 | Chart | `oci://ghcr.io/donkeyx/charts/dead-drop` |
 
 Create the namespace (optional if you pass `--create-namespace`) and the database URL Secret separately. The chart does not create either.
