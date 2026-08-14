@@ -120,36 +120,6 @@ jobs:
           echo "==== recent events ===="
           kubectl -n dead-drop get events --sort-by='.lastTimestamp' | tail -20
 
-      - name: Set up Node
-        if: ${{ vars.SMOKE_URL != '' }}
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: npm
-
-      - name: Live Playwright smoke
-        if: ${{ vars.SMOKE_URL != '' }}
-        env:
-          SMOKE_URL: ${{ vars.SMOKE_URL }}
-          SMOKE_BYPASS: ${{ secrets.SMOKE_BYPASS }}
-        run: |
-          set -euo pipefail
-          if [ -z "${SMOKE_BYPASS}" ]; then
-            echo "::error::Set production secret SMOKE_BYPASS to the Cloudflare skip header value."
-            exit 1
-          fi
-          npm ci
-          npx playwright install --with-deps chromium
-          npx playwright test --config playwright.smoke.config.js
-
-      - name: Upload smoke trace
-        if: ${{ failure() && vars.SMOKE_URL != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-smoke-trace
-          path: test-results/
-          if-no-files-found: ignore
-
       - name: Cluster debug
         if: failure()
         run: |
@@ -158,3 +128,37 @@ jobs:
           kubectl -n dead-drop get events --sort-by='.lastTimestamp' || true
           echo "==== logs ===="
           kubectl -n dead-drop logs deploy/dead-drop --tail=80 || true
+
+  smoke:
+    name: Live Playwright smoke
+    needs: deploy
+    runs-on: ubuntu-latest
+    environment: production
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --ipc=host
+    env:
+      HOME: /root
+      SMOKE_URL: ${{ vars.SMOKE_URL }}
+      SMOKE_BYPASS: ${{ secrets.SMOKE_BYPASS }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Run smoke
+        run: |
+          set -euo pipefail
+          if [ -z "${SMOKE_URL}" ]; then
+            echo "::error::Set production variable SMOKE_URL."
+            exit 1
+          fi
+          npm ci
+          npx playwright test --config playwright.smoke.config.js
+
+      - name: Upload smoke trace
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-trace
+          path: test-results/
+          if-no-files-found: ignore
