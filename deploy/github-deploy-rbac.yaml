@@ -1,0 +1,88 @@
+# Apply once with cluster-admin. The GitHub production environment
+# authenticates as this ServiceAccount — not a laptop kubeconfig.
+#
+#   kubectl apply -f deploy/github-deploy-rbac.yaml
+#   ./deploy/github-deploy-kubeconfig.sh
+#
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dead-drop-github-deploy
+  namespace: dead-drop
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dead-drop-github-deploy-token
+  namespace: dead-drop
+  annotations:
+    kubernetes.io/service-account.name: dead-drop-github-deploy
+type: kubernetes.io/service-account-token
+---
+# Helm needs to GET the release namespace. Namespace objects are
+# cluster-scoped; this is get-only on dead-drop itself.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dead-drop-github-deploy-ns
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    resourceNames: ["dead-drop"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dead-drop-github-deploy-ns
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dead-drop-github-deploy-ns
+subjects:
+  - kind: ServiceAccount
+    name: dead-drop-github-deploy
+    namespace: dead-drop
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dead-drop-github-deploy
+  namespace: dead-drop
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services", "events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "update", "patch", "delete"]
+  # Helm stores releases as Secrets in the namespace.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["policy"]
+    resources: ["poddisruptionbudgets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dead-drop-github-deploy
+  namespace: dead-drop
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dead-drop-github-deploy
+subjects:
+  - kind: ServiceAccount
+    name: dead-drop-github-deploy
+    namespace: dead-drop

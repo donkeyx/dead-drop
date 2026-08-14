@@ -53,6 +53,30 @@ image:
 
 If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[0].name=ghcr-pull-secret`.
 
+## GitHub Actions deploy
+
+Image publish stays on the `ci` environment. Cluster changes use a separate **`production`** environment and [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml).
+
+Triggers: push of a `v*` tag (after the image exists), or **Run workflow** with a version.
+
+Create the `production` environment on the repo, then add:
+
+| Kind | Name | Value |
+|------|------|--------|
+| Secret | `KUBECONFIG` | Deploy-only kubeconfig YAML (not a laptop admin file) |
+| Secret | `HELM_VALUES` | Cluster overlay YAML — same shape as `values.example.yaml`. `image.tag` is set by the workflow. |
+| Variable | `SMOKE_URL` | Optional. If set (e.g. `https://drop.example.com`), the job GETs `/readyz` after the rollout. |
+
+Mint the kubeconfig once (needs cluster-admin). It can only change objects in `dead-drop`:
+
+```bash
+kubectl apply -f deploy/github-deploy-rbac.yaml
+./deploy/github-deploy-kubeconfig.sh
+# paste ~/.secure/dead-drop-github-deploy.kubeconfig into KUBECONFIG
+```
+
+`ci` Hub credentials must not be copied here. The DB URL and origin TLS stay as cluster Secrets; they are not in GitHub.
+
 Set `autoscaling.enabled=true` to enable HPA. PostgreSQL is required for multiple replicas; SQLite and filesystem storage are not supported by this chart. The application rate limiter remains per pod until a shared limiter is added.
 
 The chart includes a `/startupz` probe with a two-and-a-half-minute failure budget. The server opens the configured store and completes database migrations before it starts listening; Kubernetes waits for this probe before evaluating readiness and liveness. Startup phases are logged without logging database URLs or secret data. Override `startupProbe` in the values overlay if the target cluster needs different timing. Default resource requests are `10m` CPU and `50Mi` memory, with limits of `500m` CPU and `512Mi` memory; these defaults are based on observed steady-state usage. If enabling CPU-based HPA, revisit the target because a low CPU request makes utilization percentages sensitive to small bursts.
