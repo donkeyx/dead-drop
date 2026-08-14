@@ -1,125 +1,97 @@
 # dead-drop
 
-A dead drop for secrets: encrypt **before** upload, key in the URL fragment (`#...`). The server only ever sees ciphertext.
+```
+╭──────────────────────────────────────╮
+│   🐴 DonkeyX's dead-drop             │
+╰──────────────────────────────────────╯
+
+        //\\
+       (/oo\)   .--------.
+       (____)  | SEALED  |
+        /||\   '--------'
+       //||\\   📦 burn after read
+      ^^ ^^ ^^
+   "Encrypt first. Leave the key in the fragment."
+```
+
+A dead drop for secrets. The browser (or CLI) encrypts **before** upload. The key lives in the URL fragment (`#...`), which never goes to the server. All the operator holds is ciphertext.
 
 ```
 https://your.host/s/<id>#<key>
          ↑ server knows id     ↑ never sent to the server
 ```
 
-## Status
+Same donkey stable as [tcp-wait](https://github.com/donkeyx/tcp-wait) / [cluster-utils-api](https://github.com/donkeyx/cluster-utils-api) — this one’s the “pass a secret without the host reading it” bit.
 
-**v0.1.0** — first tagged release. Public instance: [drop.donkeyx.dev](https://drop.donkeyx.dev/).
+| hosted | https://drop.donkeyx.dev/ |
+| dockerhub | https://hub.docker.com/r/donkeyx/dead-drop |
+| ghcr | `ghcr.io/donkeyx/dead-drop` |
+| helm | `oci://ghcr.io/donkeyx/charts/dead-drop` |
+| design | [DESIGN.md](DESIGN.md) |
 
-| Piece | State |
-|-------|--------|
-| **Design** | [DESIGN.md](DESIGN.md) |
-| **PR1 — SEAL blob library** | done (`blob/`) |
-| **PR2 — offline CLI** | done (`cmd/dead-drop` seal/open) |
-| **PR3 — store + Take** | done (`store/` FS + SQLite) |
-| **PR4 — HTTP API** | done (`server/`, `dead-drop serve`) |
-| **PR5 — network put/get** | done |
-| **PR6 — WASM crypto** | done (`make wasm` / `make wasm-test`) |
-| **PR7 — browser UI** | done (create/reveal, `/about`, same-origin WASM) |
-| **Postgres + Helm** | done (replicas, GHCR + Docker Hub images) |
+<p align="center">
+  <img src="docs/screenshots/create.png" alt="Create an encrypted drop" width="640">
+</p>
 
-## CLI (offline)
+## Leave a drop
+
+**Browser:** open the hosted instance or your own, type a secret or attach a file (max 16 MiB), copy the link. Encryption runs in WASM in the page. The server response is an id and path only — no fragment key.
+
+**CLI** (seal offline, or put over the network):
 
 ```bash
 go build -o bin/dead-drop ./cmd/dead-drop
 
-# seal a file → package + key (keep the key offline)
+# keep the key on your machine
 ./bin/dead-drop seal -in secret.txt -out secret.seal -key-out secret.key
-
-# open
 ./bin/dead-drop open -in secret.seal -out secret.txt -key-file secret.key
 
-# optional passphrase (from env, never argv)
+# or seal client-side, upload ciphertext, print the share link (includes #key)
+./bin/dead-drop put -server https://drop.donkeyx.dev -in secret.txt
+./bin/dead-drop get -out secret.txt 'https://drop.donkeyx.dev/s/ID#KEY'
+```
+
+Passphrases come from the environment, never argv:
+
+```bash
 export DEADDROP_PASS='correct horse'
 ./bin/dead-drop seal -in f -out f.seal -key-out k -passphrase-env DEADDROP_PASS
-./bin/dead-drop open -in f.seal -out f -key-file k -passphrase-env DEADDROP_PASS
 ```
 
-## Server + network CLI
+Burn-after-read is **on** by default. A concurrent burn `Take` has one winner; a failed response after `Take` still consumes the drop.
 
-```bash
-./bin/dead-drop serve -addr :8080 -data ./data -store sqlite
+## Not magic
 
-# shared storage for multiple replicas / Kubernetes HPA
-DEADDROP_STORE=postgres \
-DEADDROP_DATABASE_URL='postgres://user:password@postgres/deaddrop?sslmode=require' \
-./bin/dead-drop serve -addr :8080
+<p align="center">
+  <img src="docs/screenshots/about.png" alt="How it works and what to trust" width="640">
+</p>
 
-# seal client-side, upload ciphertext, print share link (includes #key)
-./bin/dead-drop put -server http://127.0.0.1:8080 -in secret.txt
+| Server has | Server does not have |
+|------------|----------------------|
+| Ciphertext, TTL, burn flag | Plaintext |
+| Size / timestamps | Fragment key (`#…`) |
 
-# download + decrypt (flags before URL)
-./bin/dead-drop get -out secret.txt 'http://127.0.0.1:8080/s/ID#KEY'
+If you use the **hosted UI**, you still trust the JS/WASM we serve. XSS or a malicious deploy can steal keys. The offline CLI is the paranoia path. Self-host if you do not trust this origin.
 
-# or raw API (ciphertext only)
-curl -sS -X POST http://127.0.0.1:8080/api/v1/secrets \
-  -H 'Content-Type: application/octet-stream' \
-  -H 'X-Seal-TTL: 24h' -H 'X-Seal-Burn: 1' \
-  --data-binary @secret.seal
-```
+No CORS. No accounts. No “zero-knowledge” badge — just client-side encryption and an operator who cannot read the disk.
 
-No CORS. Fragment keys never go to the server.
+## Run your own
 
-The server exposes `GET /healthz`, `GET /startupz`, and `GET /readyz` for container orchestration. Store initialization, PostgreSQL connectivity, and migrations complete before the server starts listening; startup logs describe those phases without logging database URLs or secret data.
-
-## Browser WASM
-
-```bash
-make wasm        # web/static/dead-drop.wasm + wasm_exec.js
-make wasm-test   # Node harness opens PR1 golden vectors
-```
-
-```html
-<script src="/static/wasm_exec.js"></script>
-<script src="/static/deaddrop.js"></script>
-<script>
-  const { blob, key } = await DeadDrop.encrypt(new TextEncoder().encode("hi"), {
-    contentType: "text/plain",
-  });
-  // POST blob to /api/v1/secrets; share URL + "#" + key
-  const { plaintext } = await DeadDrop.decrypt(blob, key);
-</script>
-```
-
-Gzip size target ≤ 1.5 MiB (currently ~1.0 MiB).
-
-## Browser UI
-
-The server serves the create shell at `/` and the reveal shell at `/s/{id}`.
-Build the generated WASM assets before starting the server:
+Single node (SQLite or filesystem — one writer, one data dir):
 
 ```bash
 make wasm
-./bin/dead-drop serve -addr :8080 -data ./data -static ./web/static
+./bin/dead-drop serve -addr :8080 -data ./data -store sqlite
 ```
 
-The browser encrypts before `POST /api/v1/secrets`; the fragment key is never sent to the server. Text and small files up to 16 MiB are supported, with files downloaded using their encrypted filename and content type. Reveal pages clear the fragment from the visible address bar on first use, but burn-after-read still consumes the drop when the ciphertext is fetched.
-
-The UI includes a trust page at `/about`, passphrase visibility controls, optional secret-text masking, burn-after-read controls, and copied-link feedback. The trust page explains the encryption boundary and why self-hosting is the correct option when the hosted instance is not trusted.
-
-## Deployment storage
-
-SQLite and filesystem storage are single-writer backends for one replica with one local data directory. Use `DEADDROP_STORE=postgres` with `DEADDROP_DATABASE_URL` before running multiple replicas or enabling Kubernetes HPA. PostgreSQL keeps burn-after-read `Take` atomic across replicas; the database must be reachable by every pod and protected with TLS and normal secret management.
-
-The current rate limiter is in-memory and therefore per-pod. PostgreSQL makes secret storage safe across replicas, but shared/global rate limiting is a separate deployment-hardening task before treating HPA limits as fleet-wide limits.
-
-## Kubernetes / Helm
-
-The chart at `deploy/helm/dead-drop` deploys stateless replicas backed by an external PostgreSQL database. It includes readiness/liveness probes, a PodDisruptionBudget, optional HPA, Ingress support, non-root security settings, and a Secret reference for `DEADDROP_DATABASE_URL`.
-
-CI publishes `ghcr.io/donkeyx/dead-drop`, `docker.io/donkeyx/dead-drop`, and `oci://ghcr.io/donkeyx/charts/dead-drop` from `master` and `v*` tags. Hub credentials live on the `ci` environment (`DOCKERHUB_USERNAME` variable + `DOCKERHUB_TOKEN` secret). Pull either image:
+Replicas need Postgres (`DEADDROP_STORE=postgres` + `DEADDROP_DATABASE_URL`). That keeps `Take` atomic across pods. The rate limiter is still per-pod.
 
 ```bash
-docker pull ghcr.io/donkeyx/dead-drop:0.1.0
-docker pull docker.io/donkeyx/dead-drop:0.1.0
+docker pull ghcr.io/donkeyx/dead-drop:latest
+docker pull docker.io/donkeyx/dead-drop:latest
 ```
 
-See [deploy/helm/dead-drop/README.md](deploy/helm/dead-drop/README.md).
+Helm chart, probes, and the values overlay: [deploy/helm/dead-drop/README.md](deploy/helm/dead-drop/README.md). Hub creds for CI live on the repo `ci` environment (`DOCKERHUB_USERNAME` variable + `DOCKERHUB_TOKEN` secret).
 
 ```bash
 kubectl create secret generic dead-drop-db \
@@ -133,9 +105,11 @@ helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
   -f deploy/helm/dead-drop/values.local.yaml
 ```
 
-The chart defaults to two stateless replicas, PostgreSQL storage, non-root execution, resource requests/limits, startup/readiness/liveness probes, a PodDisruptionBudget, and optional HPA. Ingress is disabled until a cluster-specific host, class, annotations, and TLS secret are supplied in the values overlay. The chart never creates the database or its Secret.
+Health: `GET /healthz`, `GET /startupz`, `GET /readyz`.
 
-## Library (PR1)
+## Library
+
+Same SEAL v1 code the CLI and WASM use:
 
 ```go
 import "github.com/donkeyx/dead-drop/blob"
@@ -145,38 +119,21 @@ pkg, err := blob.Seal([]byte("my secret"), key, blob.SealOptions{
     ContentType: "text/plain; charset=utf-8",
     // Passphrase: []byte("optional second factor"),
 })
-// ...
 res, err := blob.Open(pkg, key, nil)
 ```
 
-Golden interop vectors: `blob/testdata/v1_nopass.json`, `v1_passphrase.json`.
+Golden vectors: `blob/testdata/v1_nopass.json`, `v1_passphrase.json`.
 
-GitHub Actions runs Go formatting, tests, race tests, vet, a static CLI build, `govulncheck`, WASM asset generation, browser JavaScript syntax checks, vector interop, and the compressed WASM size gate.
-
-GitHub Actions also runs Playwright browser tests for text drops, file drops, burn-after-read behavior, and fragment-free API requests. Locally, install dependencies with `npm ci`, install Chromium and its host dependencies with `npx playwright install --with-deps chromium`, then run `npm run test:browser`.
+## Develop
 
 ```bash
 go test ./...
 make build
+make wasm        # web/static/dead-drop.wasm + wasm_exec.js
+make wasm-test   # Node harness opens the golden vectors
 ```
 
-## Threat model (short)
-
-| Server has | Server does not have |
-|------------|----------------------|
-| Ciphertext, TTL, burn flag | Plaintext |
-| Size / timestamps | Fragment key (`#…`) |
-
-**Not magic:** if you host the web UI, users still trust the code you serve. XSS or a malicious deploy can steal keys. Offline CLI encrypt is the paranoia path (PR2).
-
-If you do not trust the hosted instance, run the server yourself from this repository. The server cannot decrypt stored drops, but a compromised deployment could serve modified browser JavaScript and capture plaintext or fragment keys before encryption. The offline CLI avoids that hosted-browser trust boundary entirely.
-
-## Stack
-
-- Go library (SEAL v1) + CLI + stdlib HTTP server
-- Go **WASM** browser crypto (same code, same-origin UI)
-- Helm chart; images on GHCR and Docker Hub
-- MIT
+CI runs format, tests, race, vet, `govulncheck`, WASM size (gzip ≤ 1.5 MiB, currently ~1.0), and Playwright (text drop, file drop, burn, no fragment on the wire). Locally: `npm ci && npx playwright install --with-deps chromium && npm run test:browser`.
 
 ## License
 
