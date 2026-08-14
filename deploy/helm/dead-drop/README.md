@@ -46,3 +46,5 @@ helm upgrade --install dead-drop ./deploy/helm/dead-drop \
 If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[0].name=ghcr-pull-secret`.
 
 Set `autoscaling.enabled=true` to enable HPA. PostgreSQL is required for multiple replicas; SQLite and filesystem storage are not supported by this chart. The application rate limiter remains per pod until a shared limiter is added.
+
+The chart includes a startup probe with a two-and-a-half-minute failure budget. During startup, Kubernetes waits for this probe before evaluating readiness and liveness; override `startupProbe` in the values overlay if the target cluster needs different timing. Default resource requests are `50m` CPU and `128Mi` memory, with limits of `500m` CPU and `512Mi` memory; tune these from observed usage for production workloads.

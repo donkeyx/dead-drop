@@ -45,6 +45,16 @@ resources:
     cpu: 500m
     memory: 512Mi
 
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  initialDelaySeconds: 0
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 30
+  successThreshold: 1
+
 podDisruptionBudget:
   enabled: true
   minAvailable: 1
