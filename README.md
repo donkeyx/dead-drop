@@ -16,6 +16,8 @@
 
 A dead drop for secrets. The browser (or CLI) encrypts **before** upload. The key lives in the URL fragment (`#...`), which never goes to the server. All the operator holds is ciphertext.
 
+Handy when a password-manager share isn't an option — an API token, a private key, a small kubeconfig — and you don't want that sitting in Slack or Discord history. Burn-after-read and a short TTL are on by default so the drop doesn't hang around.
+
 ```
 https://your.host/s/<id>#<key>
          ↑ server knows id     ↑ never sent to the server
