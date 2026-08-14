@@ -47,7 +47,7 @@ resources:
 
 startupProbe:
   httpGet:
-    path: /healthz
+    path: /startupz
     port: http
   initialDelaySeconds: 0
   periodSeconds: 5

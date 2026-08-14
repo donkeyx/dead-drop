@@ -52,6 +52,7 @@ func cmdServe(args []string) int {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
 	var st store.Store
+	log.Info("opening store", "store", cfg.Store)
 	switch cfg.Store {
 	case "fs":
 		st, err = store.OpenFS(cfg.DataDir)
@@ -65,6 +66,7 @@ func cmdServe(args []string) int {
 		return exitUsage
 	}
 	defer st.Close()
+	log.Info("store ready", "store", cfg.Store)
 
 	srv := server.New(cfg, st, log)
 	httpSrv := &http.Server{
