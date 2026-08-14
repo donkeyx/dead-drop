@@ -33,10 +33,6 @@ Same donkey stable as [tcp-wait](https://github.com/donkeyx/tcp-wait) / [cluster
 | helm | `oci://ghcr.io/donkeyx/charts/dead-drop` |
 | design | [DESIGN.md](DESIGN.md) |
 
-<p align="center">
-  <img src="docs/screenshots/create.png" alt="Create an encrypted drop" width="640">
-</p>
-
 ## Leave a drop
 
 **Browser:** [drop.donkeyx.dev](https://drop.donkeyx.dev/) — type a secret or attach a file (max 16 MiB), copy the link. Same UI if you self-host. Encryption runs in WASM in the page. The server response is an id and path only — no fragment key.
@@ -65,10 +61,6 @@ export DEADDROP_PASS='correct horse'
 Burn-after-read is **on** by default. A concurrent burn `Take` has one winner; a failed response after `Take` still consumes the drop.
 
 ## Not magic
-
-<p align="center">
-  <img src="docs/screenshots/about.png" alt="How it works and what to trust" width="640">
-</p>
 
 | Server has | Server does not have |
 |------------|----------------------|
