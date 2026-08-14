@@ -5,6 +5,9 @@ if (!baseURL) {
   throw new Error("SMOKE_URL is required for the live smoke (e.g. https://drop.donkeyx.dev)");
 }
 
+const bypass = process.env.SMOKE_BYPASS || "";
+const extraHTTPHeaders = bypass ? { "x-dead-drop-smoke": bypass } : {};
+
 module.exports = defineConfig({
   testDir: "./tests/browser",
   testMatch: "smoke.spec.js",
@@ -15,6 +18,7 @@ module.exports = defineConfig({
     baseURL,
     browserName: "chromium",
     headless: true,
+    extraHTTPHeaders,
     trace: "retain-on-failure",
   },
 });

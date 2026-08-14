@@ -66,6 +66,7 @@ Create the `production` environment on the repo, then add:
 | Secret | `KUBECONFIG` | Deploy-only kubeconfig YAML (not a laptop admin file) |
 | Secret | `HELM_VALUES` | Cluster overlay YAML — same shape as `values.example.yaml`. `image.tag` is set by the workflow. |
 | Variable | `SMOKE_URL` | Public origin, e.g. `https://drop.donkeyx.dev`. After rollout, Playwright creates, opens, and burns a dummy drop. |
+| Secret | `SMOKE_BYPASS` | Same value as the Cloudflare WAF skip header `x-dead-drop-smoke`. |
 
 Ready is the chart's `/readyz` probe plus `helm --wait` and `kubectl rollout status`. Then the job prints pod/event status and runs the live browser smoke. On failure it dumps events, logs, and a Playwright trace.
 
