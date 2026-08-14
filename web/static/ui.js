@@ -139,8 +139,41 @@
         result.append(download);
       } else {
         const pre = document.createElement("pre");
+        pre.id = "revealed-secret";
+        pre.className = "privacy-mode";
         pre.textContent = new TextDecoder().decode(opened.plaintext);
-        result.append(pre);
+
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "visibility-toggle";
+        toggle.textContent = "◉";
+        toggle.setAttribute("aria-label", "Show secret");
+        toggle.title = "Show secret";
+        toggle.addEventListener("click", () => {
+          const hidden = pre.classList.toggle("privacy-mode");
+          const label = hidden ? "Show secret" : "Hide secret";
+          toggle.setAttribute("aria-label", label);
+          toggle.title = label;
+        });
+
+        const copy = document.createElement("button");
+        copy.type = "button";
+        copy.dataset.label = "Copy";
+        copy.textContent = copy.dataset.label;
+        copy.addEventListener("click", async () => {
+          try {
+            await copyText(pre.textContent);
+            copy.textContent = "Copied";
+            window.setTimeout(() => { copy.textContent = copy.dataset.label; }, 1800);
+          } catch (error) {
+            copy.textContent = error.message;
+          }
+        });
+
+        const row = document.createElement("div");
+        row.className = "input-with-action secret-input";
+        row.append(pre, toggle);
+        result.append(row, copy);
       }
     } catch (error) {
       setMessage(result, error.message);

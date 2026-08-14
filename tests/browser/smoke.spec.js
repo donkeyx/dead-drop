@@ -19,7 +19,7 @@ test("live create, reveal, and burn", async ({ page, context }) => {
   const recipient = await context.newPage();
   await recipient.goto(shareURL);
   await recipient.getByRole("button", { name: "Open encrypted drop" }).click();
-  await expect(recipient.locator("#reveal-result")).toHaveText(secret);
+  await expect(recipient.locator("#revealed-secret")).toHaveText(secret);
 
   const second = await context.newPage();
   await second.goto(shareURL);
