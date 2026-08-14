@@ -97,6 +97,7 @@ jobs:
       options: --ipc=host
     env:
       HOME: /root
+      GOFLAGS: -buildvcs=false
     defaults:
       run:
         shell: bash
@@ -119,7 +120,7 @@ jobs:
             WASM_EXEC="$(go env GOROOT)/misc/wasm/wasm_exec.js"
           fi
           cp "${WASM_EXEC}" web/static/wasm_exec.js
-          GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" \
+          GOOS=js GOARCH=wasm go build -trimpath -buildvcs=false -ldflags="-s -w" \
             -o web/static/dead-drop.wasm ./cmd/dead-drop-wasm
 
       - name: Install npm deps
