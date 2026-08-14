@@ -161,8 +161,37 @@ label:has(#burn) {
   text-transform: none;
   letter-spacing: 0;
   color: var(--ink);
+  margin-top: 0;
+}
+
+.keep-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
   margin-top: 1rem;
 }
+
+.ttl-label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+.ttl-label select {
+  width: auto;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--bg-2);
+  color: inherit;
+}
+
+.keep-meta { margin: 0.45rem 0 0; }
 
 button {
   appearance: none;

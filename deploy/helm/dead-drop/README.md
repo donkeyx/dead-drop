@@ -30,7 +30,7 @@ Install the published chart:
 
 ```bash
 helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
-  --version 0.1.1 \
+  --version 0.1.2 \
   -n dead-drop --create-namespace \
   -f deploy/helm/dead-drop/values.local.yaml
 ```
@@ -48,7 +48,7 @@ To pull the image from Docker Hub instead of GHCR, set this in the overlay:
 ```yaml
 image:
   repository: docker.io/donkeyx/dead-drop
-  tag: "0.1.1"
+  tag: "0.1.2"
 ```
 
 If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[0].name=ghcr-pull-secret`.
