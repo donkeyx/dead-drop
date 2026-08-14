@@ -57,7 +57,7 @@ If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[
 
 Image publish stays on the `ci` environment. Cluster changes use a separate **`production`** environment and [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml).
 
-Triggers: push of a `v*` tag (after the image exists), or **Run workflow** with that same semver (`0.1.1` / `v0.1.1`) to redeploy a release. `sha-*`, `latest`, and `master` are rejected. The job checks out `v<version>` so the chart matches the image.
+A `v*` tag runs **Docker and Helm** first (multi-arch push). Deploy starts only after that workflow succeeds (`workflow_run`). **Run workflow** still redeploys an existing semver (`0.1.2` / `v0.1.2`) without rebuilding. `sha-*`, `latest`, and `master` are rejected. The job checks out `v<version>` so the chart matches the image.
 
 Create the `production` environment on the repo, then add:
 

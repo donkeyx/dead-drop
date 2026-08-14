@@ -1,9 +1,9 @@
 name: Deploy
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_run:
+    workflows: ["Docker and Helm"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       version:
@@ -22,6 +22,10 @@ permissions:
 jobs:
   deploy:
     name: Helm upgrade
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
     runs-on: ubuntu-latest
     environment: production
     steps:
@@ -32,7 +36,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             raw="${{ inputs.version }}"
           else
-            raw="${GITHUB_REF_NAME}"
+            raw="${{ github.event.workflow_run.head_branch }}"
           fi
           ver="${raw#v}"
           if [ -z "${ver}" ]; then
@@ -94,16 +98,12 @@ jobs:
         run: |
           set -euo pipefail
           image="ghcr.io/donkeyx/dead-drop:${VERSION}"
-          echo "Waiting for ${image}"
-          for i in $(seq 1 40); do
-            if docker manifest inspect "${image}" >/dev/null 2>&1; then
-              echo "Image is published"
-              exit 0
-            fi
-            echo "not ready yet (${i}/40)"
-            sleep 15
-          done
-          echo "::error::Timed out waiting for ${image}"
+          echo "Checking ${image}"
+          if docker manifest inspect "${image}" >/dev/null 2>&1; then
+            echo "Image is published"
+            exit 0
+          fi
+          echo "::error::${image} is not in GHCR. Publish must finish first."
           exit 1
 
       - name: Helm upgrade
