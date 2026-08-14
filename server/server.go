@@ -87,11 +87,11 @@ func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	s.writeShell(w)
+	s.writeShell(w, r)
 }
 
 func (s *Server) handleReveal(w http.ResponseWriter, r *http.Request) {
-	s.writeShell(w)
+	s.writeShell(w, r)
 }
 
 func (s *Server) handleAbout(w http.ResponseWriter, r *http.Request) {
@@ -151,10 +151,14 @@ func (s *Server) contentSecurityPolicy() string {
 		connect + "; " + frame + "; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'"
 }
 
-func (s *Server) writeShell(w http.ResponseWriter) {
+func (s *Server) writeShell(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = s.ui.Execute(w, struct{ TurnstileSiteKey string }{TurnstileSiteKey: s.cfg.TurnstileSiteKey})
+	key := s.cfg.TurnstileSiteKey
+	if s.smokeBypassed(r) {
+		key = ""
+	}
+	_ = s.ui.Execute(w, struct{ TurnstileSiteKey string }{TurnstileSiteKey: key})
 }
 
 func (s *Server) smokeBypassed(r *http.Request) bool {
