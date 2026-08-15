@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/donkeyx/dead-drop/internal/config"
+	"github.com/donkeyx/dead-drop/internal/observe"
 	"github.com/donkeyx/dead-drop/server"
 	"github.com/donkeyx/dead-drop/store"
 )
@@ -68,6 +69,11 @@ func cmdServe(args []string) int {
 	defer st.Close()
 	log.Info("store ready", "store", cfg.Store)
 
+	if err := observe.Start(context.Background()); err != nil {
+		fmt.Fprintf(os.Stderr, "serve: observe: %v\n", err)
+		return exitUsage
+	}
+
 	srv := server.New(cfg, st, log)
 	httpSrv := &http.Server{
 		Addr:              cfg.Addr,
@@ -86,12 +92,33 @@ func cmdServe(args []string) int {
 		}
 	}()
 
+	var metricsSrv *http.Server
+	if cfg.MetricsAddr != "" {
+		mux := http.NewServeMux()
+		mux.Handle("GET /metrics", observe.MetricsHandler())
+		metricsSrv = &http.Server{
+			Addr:              cfg.MetricsAddr,
+			Handler:           mux,
+			ReadHeaderTimeout: 5 * time.Second,
+		}
+		go func() {
+			log.Info("metrics listening", "addr", cfg.MetricsAddr)
+			if err := metricsSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Error("metrics server", "err", err)
+			}
+		}()
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	<-ctx.Done()
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_ = httpSrv.Shutdown(shutdownCtx)
+	if metricsSrv != nil {
+		_ = metricsSrv.Shutdown(shutdownCtx)
+	}
+	observe.Shutdown(shutdownCtx)
 	log.Info("shutdown complete")
 	return exitOK
 }

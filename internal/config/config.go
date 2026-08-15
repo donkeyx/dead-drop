@@ -12,6 +12,7 @@ import (
 // Config is process configuration for dead-drop serve.
 type Config struct {
 	Addr           string
+	MetricsAddr    string // empty = do not serve /metrics
 	DataDir        string
 	StaticDir      string
 	Store          string // sqlite | fs
@@ -41,6 +42,7 @@ type Config struct {
 func LoadFromEnv() (Config, error) {
 	c := Config{
 		Addr:               env("DEADDROP_ADDR", ":8080"),
+		MetricsAddr:        env("DEADDROP_METRICS_ADDR", ""),
 		DataDir:            env("DEADDROP_DATA", "./data"),
 		StaticDir:          env("DEADDROP_STATIC", "./web/static"),
 		Store:              strings.ToLower(env("DEADDROP_STORE", "sqlite")),

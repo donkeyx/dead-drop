@@ -18,9 +18,12 @@ import (
 
 	"github.com/donkeyx/dead-drop/blob"
 	"github.com/donkeyx/dead-drop/internal/config"
+	"github.com/donkeyx/dead-drop/internal/observe"
 	"github.com/donkeyx/dead-drop/internal/ratelimit"
 	"github.com/donkeyx/dead-drop/internal/turnstile"
 	"github.com/donkeyx/dead-drop/store"
+
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 // Server is the HTTP API.
@@ -67,7 +70,24 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /readyz", s.handleReadyz)
 	mux.HandleFunc("POST /api/v1/secrets", s.handleCreate)
 	mux.HandleFunc("GET /api/v1/secrets/{id}", s.handleGet)
-	return s.middleware(mux)
+	h := s.middleware(mux)
+	h = observe.HTTP(h)
+	if observe.Tracing() {
+		h = otelhttp.NewHandler(h, "dead-drop",
+			otelhttp.WithFilter(func(r *http.Request) bool {
+				switch r.URL.Path {
+				case "/healthz", "/readyz", "/startupz":
+					return false
+				default:
+					return true
+				}
+			}),
+			otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {
+				return r.Method + " " + observe.Route(r)
+			}),
+		)
+	}
+	return h
 }
 
 func (s *Server) middleware(next http.Handler) http.Handler {
@@ -463,6 +483,7 @@ func (s *Server) handleCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.log.Info("secret created", "id", truncateID(id, s.cfg.LogIDsFull), "size", len(blobBytes), "burn", burn)
+	observe.Created(r.Context())
 	writeJSON(w, http.StatusCreated, createResp{
 		ID:            id,
 		ExpiresAt:     meta.ExpiresAt,
@@ -490,6 +511,7 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request) {
 	rec, err := s.st.Take(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
+			observe.Fetched(r.Context(), "not_found")
 			writeErr(w, http.StatusNotFound, "not_found", "not found")
 			return
 		}
@@ -498,6 +520,10 @@ func (s *Server) handleGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	observe.Fetched(r.Context(), "ok")
+	if rec.Meta.BurnAfterRead {
+		observe.Burned(r.Context())
+	}
 	w.Header().Set("X-Seal-Burn-After-Read", strconv.FormatBool(rec.Meta.BurnAfterRead))
 	w.Header().Set("X-Seal-Expires-At", rec.Meta.ExpiresAt.UTC().Format(time.RFC3339))
 	w.Header().Set("Cache-Control", "no-store")

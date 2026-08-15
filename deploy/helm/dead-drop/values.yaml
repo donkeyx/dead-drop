@@ -12,6 +12,11 @@ replicaCount: 2
 service:
   type: ClusterIP
   port: 8080
+  metricsPort: 9090
+
+metrics:
+  enabled: true
+  addr: ":9090"
 
 database:
   existingSecret: ""
@@ -34,6 +39,12 @@ turnstile:
   existingSecret: ""
   siteKeyKey: site-key
   secretKey: secret
+
+# Grafana Cloud OTLP (metrics + traces). Empty = no export. Keys stay out of git.
+grafana:
+  existingSecret: ""
+  endpointKey: otlp-endpoint
+  headersKey: otlp-headers
 
 ingress:
   enabled: false
