@@ -1,0 +1,309 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Redeploy an existing tag (0.1.2 or v0.1.2). Does not rebuild.
+        required: true
+        type: string
+
+concurrency:
+  group: release-production
+  cancel-in-progress: false
+
+env:
+  GHCR_IMAGE: ghcr.io/donkeyx/dead-drop
+  DOCKERHUB_IMAGE: docker.io/donkeyx/dead-drop
+  HELM_OCI: oci://ghcr.io/donkeyx/charts
+
+jobs:
+  version:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      ref: ${{ steps.ver.outputs.ref }}
+    steps:
+      - name: Resolve version
+        id: ver
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            raw="${{ inputs.version }}"
+          else
+            raw="${{ github.ref_name }}"
+          fi
+          ver="${raw#v}"
+          if [ -z "${ver}" ]; then
+            echo "::error::version is empty"
+            exit 1
+          fi
+          if ! printf '%s' "${ver}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$'; then
+            echo "::error::Release only tagged semver (got ${raw}). Use v0.1.2, not sha-* / latest / master."
+            exit 1
+          fi
+          echo "version=${ver}" >> "$GITHUB_OUTPUT"
+          echo "ref=v${ver}" >> "$GITHUB_OUTPUT"
+          echo "Resolved v${ver}"
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.ver.outputs.ref }}
+          fetch-depth: 0
+
+      - name: Tag must be on master
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin master
+          if ! git merge-base --is-ancestor HEAD origin/master; then
+            echo "::error::${{ steps.ver.outputs.ref }} is not on origin/master."
+            exit 1
+          fi
+
+      - name: Chart version matches tag
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          ver="${{ steps.ver.outputs.version }}"
+          chart="$(awk '/^version:/ { print $2; exit }' deploy/helm/dead-drop/Chart.yaml)"
+          app="$(awk '/^appVersion:/ { gsub(/"/, "", $2); print $2; exit }' deploy/helm/dead-drop/Chart.yaml)"
+          if [ "${chart}" != "${ver}" ] || [ "${app}" != "${ver}" ]; then
+            echo "::error::Chart.yaml version (${chart}) / appVersion (${app}) must match tag ${ver}."
+            exit 1
+          fi
+
+  publish:
+    name: Publish image and chart
+    needs: version
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: ci
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ${{ env.GHCR_IMAGE }}
+            ${{ env.DOCKERHUB_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
+
+      - name: Update Docker Hub README
+        continue-on-error: true
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: donkeyx/dead-drop
+          short-description: ${{ github.event.repository.description }}
+          readme-filepath: ./README.md
+          enable-url-completion: true
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v3.16.4
+
+      - name: Package and push chart
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/helm
+          helm package deploy/helm/dead-drop --version "${VERSION}" --app-version "${VERSION}" -d /tmp/helm
+          helm push /tmp/helm/dead-drop-${VERSION}.tgz "${HELM_OCI}"
+          echo "Pushed ${HELM_OCI}/dead-drop:${VERSION}"
+
+  deploy:
+    name: Helm upgrade
+    needs: [version, publish]
+    if: >
+      always() &&
+      !cancelled() &&
+      needs.version.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' || needs.publish.result == 'success')
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: v3.16.4
+
+      - name: Set up kubeconfig
+        env:
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KUBECONFIG_DATA}" ]; then
+            echo "::error::Set production secret KUBECONFIG to a deploy-only kubeconfig."
+            exit 1
+          fi
+          mkdir -p "${HOME}/.kube"
+          printf '%s\n' "${KUBECONFIG_DATA}" > "${HOME}/.kube/config"
+          chmod 600 "${HOME}/.kube/config"
+
+      - name: Write Helm overlay
+        env:
+          HELM_VALUES: ${{ secrets.HELM_VALUES }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HELM_VALUES}" ]; then
+            echo "::error::Set production secret HELM_VALUES to the cluster overlay YAML (no image.tag required)."
+            exit 1
+          fi
+          printf '%s\n' "${HELM_VALUES}" > /tmp/values.production.yaml
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check image exists
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/donkeyx/dead-drop:${VERSION}"
+          echo "Checking ${image}"
+          if ! docker manifest inspect "${image}" >/dev/null 2>&1; then
+            echo "::error::${image} is not in GHCR. Tag a release so Publish can run first."
+            exit 1
+          fi
+
+      - name: Helm upgrade
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          SMOKE_BYPASS: ${{ secrets.SMOKE_BYPASS }}
+        run: |
+          set -euo pipefail
+          helm upgrade --install dead-drop ./deploy/helm/dead-drop \
+            -n dead-drop \
+            -f /tmp/values.production.yaml \
+            --set image.repository=ghcr.io/donkeyx/dead-drop \
+            --set image.tag="${VERSION}" \
+            --set image.pullPolicy=IfNotPresent \
+            --set-string podAnnotations.deployRun="${GITHUB_RUN_ID}" \
+            --set turnstile.existingSecret=dead-drop-turnstile \
+            --set-string env.smokeBypass="${SMOKE_BYPASS}" \
+            --wait --timeout 5m
+          kubectl -n dead-drop rollout status deploy/dead-drop --timeout=180s
+
+      - name: Post-roll status
+        run: |
+          kubectl -n dead-drop get deploy,pods,svc -o wide
+          echo "==== recent events ===="
+          kubectl -n dead-drop get events --sort-by='.lastTimestamp' | tail -20
+
+      - name: Cluster debug
+        if: failure()
+        run: |
+          kubectl -n dead-drop get deploy,rs,pods,svc,ingress -o wide || true
+          echo "==== events ===="
+          kubectl -n dead-drop get events --sort-by='.lastTimestamp' || true
+          echo "==== logs ===="
+          kubectl -n dead-drop logs deploy/dead-drop --tail=80 || true
+
+  smoke:
+    name: Live Playwright smoke
+    needs: [version, deploy]
+    if: >
+      always() &&
+      !cancelled() &&
+      needs.version.result == 'success' &&
+      needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+      options: --ipc=host
+    env:
+      HOME: /root
+      SMOKE_URL: ${{ vars.SMOKE_URL }}
+      SMOKE_BYPASS: ${{ secrets.SMOKE_BYPASS }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
+
+      - name: Run smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${SMOKE_URL}" ]; then
+            echo "::error::Set production variable SMOKE_URL."
+            exit 1
+          fi
+          npm ci
+          npx playwright test --config playwright.smoke.config.js
+
+      - name: Upload smoke trace
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-trace
+          path: test-results/
+          if-no-files-found: ignore

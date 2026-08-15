@@ -87,7 +87,7 @@ docker pull ghcr.io/donkeyx/dead-drop:latest
 docker pull docker.io/donkeyx/dead-drop:latest
 ```
 
-Helm chart, probes, and the values overlay: [deploy/helm/dead-drop/README.md](deploy/helm/dead-drop/README.md). Hub creds live on the `ci` environment. Cluster deploys use a separate `production` environment (after a `v*` image publish succeeds, or **Run workflow** with that semver) — see the chart README.
+Helm chart, probes, and the values overlay: [deploy/helm/dead-drop/README.md](deploy/helm/dead-drop/README.md). A `v*` tag on master publishes the image and chart, then deploys. **Run workflow** on Release redeploys that tag — see the chart README.
 
 ```bash
 kubectl create secret generic dead-drop-db \

@@ -2,11 +2,11 @@
 
 This chart deploys stateless `dead-drop` replicas backed by an external PostgreSQL database.
 
-Published artifacts (from `master` and `v*` tags):
+Published artifacts (from `v*` tags only):
 
 | Kind | Location |
 |------|----------|
-| Images | `ghcr.io/donkeyx/dead-drop` and `docker.io/donkeyx/dead-drop` (`latest`, `sha-<git>`, semver on tags) |
+| Images | `ghcr.io/donkeyx/dead-drop` and `docker.io/donkeyx/dead-drop` (`X.Y.Z`, `X.Y`, `latest`) |
 | Chart | `oci://ghcr.io/donkeyx/charts/dead-drop` |
 
 Create the namespace (optional if you pass `--create-namespace`) and the database URL Secret separately. The chart does not create either.
@@ -55,9 +55,9 @@ If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[
 
 ## GitHub Actions deploy
 
-Image publish stays on the `ci` environment. Cluster changes use a separate **`production`** environment and [`.github/workflows/deploy.yml`](../../../.github/workflows/deploy.yml).
+Image publish stays on the `ci` environment. Cluster changes use a separate **`production`** environment. Both live in [`.github/workflows/release.yml`](../../../.github/workflows/release.yml).
 
-A `v*` tag runs **Docker and Helm** first (multi-arch push). Deploy starts only after that workflow succeeds (`workflow_run`). **Run workflow** still redeploys an existing semver (`0.1.2` / `v0.1.2`) without rebuilding. `sha-*`, `latest`, and `master` are rejected. The job checks out `v<version>` so the chart matches the image.
+A `v*` tag on `master` publishes the multi-arch image and OCI chart, then deploys. **Run workflow** redeploys an existing semver (`0.1.2` / `v0.1.2`) without rebuilding. Master and PRs only run CI — no image, no deploy. The job checks out `v<version>` so the chart matches the image.
 
 Create the `production` environment on the repo, then add:
 
