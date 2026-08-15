@@ -13,6 +13,11 @@ image:
 database:
   existingSecret: dead-drop-db
 
+# Optional Grafana Cloud OTLP. Secret keys: otlp-endpoint, otlp-headers.
+# /metrics is on :9090 only (not the ingress).
+# grafana:
+#   existingSecret: dead-drop-grafana
+
 ingress:
   enabled: true
   className: nginx

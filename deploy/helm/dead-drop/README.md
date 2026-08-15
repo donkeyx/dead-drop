@@ -30,7 +30,7 @@ Install the published chart:
 
 ```bash
 helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
-  --version 0.1.2 \
+  --version 0.1.3 \
   -n dead-drop --create-namespace \
   -f deploy/helm/dead-drop/values.local.yaml
 ```
@@ -48,7 +48,7 @@ To pull the image from Docker Hub instead of GHCR, set this in the overlay:
 ```yaml
 image:
   repository: docker.io/donkeyx/dead-drop
-  tag: "0.1.2"
+  tag: "0.1.3"
 ```
 
 If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[0].name=ghcr-pull-secret`.
@@ -57,7 +57,7 @@ If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[
 
 Image publish stays on the `ci` environment. Cluster changes use a separate **`production`** environment. Both live in [`.github/workflows/release.yml`](../../../.github/workflows/release.yml).
 
-A `v*` tag on `master` publishes the multi-arch image and OCI chart, then deploys. **Run workflow** redeploys an existing semver (`0.1.2` / `v0.1.2`) without rebuilding. Master and PRs only run CI — no image, no deploy. The job checks out `v<version>` so the chart matches the image.
+A `v*` tag on `master` publishes the multi-arch image and OCI chart, then deploys. **Run workflow** redeploys an existing semver (`0.1.3` / `v0.1.3`) without rebuilding. Master and PRs only run CI — no image, no deploy. The job checks out `v<version>` so the chart matches the image.
 
 Create the `production` environment on the repo, then add:
 
@@ -78,7 +78,24 @@ kubectl apply -f deploy/github-deploy-rbac.yaml
 # paste ~/.secure/dead-drop-github-deploy.kubeconfig into KUBECONFIG
 ```
 
-`ci` Hub credentials must not be copied here. The DB URL and origin TLS stay as cluster Secrets; they are not in GitHub.
+`ci` Hub credentials must not be copied here. The DB URL, origin TLS, and Grafana OTLP token stay as cluster Secrets; they are not in GitHub.
+
+## Metrics and Grafana Cloud
+
+`/metrics` listens on container port 9090 (`DEADDROP_METRICS_ADDR`). Ingress only routes the public HTTP port, so Prometheus text is cluster-internal. To push metrics and traces to Grafana Cloud, create a Secret and set `grafana.existingSecret` in the overlay:
+
+```bash
+kubectl -n dead-drop create secret generic dead-drop-grafana \
+  --from-literal=otlp-endpoint='https://otlp-gateway-prod-REGION.grafana.net/otlp' \
+  --from-literal=otlp-headers='Authorization=Basic BASE64(instance-id:api-token)'
+```
+
+```yaml
+grafana:
+  existingSecret: dead-drop-grafana
+```
+
+Empty `grafana.existingSecret` leaves `/metrics` on and does not export OTLP. Never label metrics or spans with a secret id.
 
 Set `autoscaling.enabled=true` to enable HPA. PostgreSQL is required for multiple replicas; SQLite and filesystem storage are not supported by this chart. The application rate limiter remains per pod until a shared limiter is added.
 

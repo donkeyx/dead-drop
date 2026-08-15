@@ -16,6 +16,6 @@ COPY --from=builder /out/dead-drop /usr/local/bin/dead-drop
 COPY --from=builder /out/web/static /app/web/static
 COPY web/static/deaddrop.js web/static/ui.js web/static/skin.css web/static/mark.jpg web/static/favicon.ico web/static/favicon.png web/static/apple-touch-icon.png /app/web/static/
 USER 10001
-EXPOSE 8080
+EXPOSE 8080 9090
 ENTRYPOINT ["/usr/local/bin/dead-drop"]
 CMD ["serve", "-addr", ":8080", "-static", "/app/web/static"]

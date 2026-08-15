@@ -16,11 +16,15 @@ import (
 
 	"github.com/donkeyx/dead-drop/blob"
 	"github.com/donkeyx/dead-drop/internal/config"
+	"github.com/donkeyx/dead-drop/internal/observe"
 	"github.com/donkeyx/dead-drop/store"
 )
 
 func testServer(t *testing.T) (*Server, store.Store) {
 	t.Helper()
+	if err := observe.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
 	dir := t.TempDir()
 	st, err := store.OpenSQLite(dir)
 	if err != nil {
@@ -495,5 +499,57 @@ func TestGetUsesTakeOnly(t *testing.T) {
 	}
 	if spy.gets.Load() != 0 {
 		t.Fatalf("Get was called %d times", spy.gets.Load())
+	}
+}
+
+func TestMetricsNotOnPublicMux(t *testing.T) {
+	srv, _ := testServer(t)
+	rr := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	if rr.Code != http.StatusNotFound {
+		t.Fatalf("public /metrics = %d, want 404", rr.Code)
+	}
+}
+
+func TestCreateAndTakeShowOnMetrics(t *testing.T) {
+	srv, _ := testServer(t)
+	h := srv.Handler()
+	pkg := sealBlob(t)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/secrets", bytes.NewReader(pkg))
+	req.Header.Set("Content-Type", "application/octet-stream")
+	req.Header.Set("X-Seal-Burn", "1")
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusCreated {
+		t.Fatal(rr.Body.String())
+	}
+	var cr createResp
+	if err := json.Unmarshal(rr.Body.Bytes(), &cr); err != nil {
+		t.Fatal(err)
+	}
+	req = httptest.NewRequest(http.MethodGet, "/api/v1/secrets/"+cr.ID, nil)
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatal(rr.Code)
+	}
+
+	mrr := httptest.NewRecorder()
+	observe.MetricsHandler().ServeHTTP(mrr, httptest.NewRequest(http.MethodGet, "/metrics", nil))
+	body := mrr.Body.String()
+	if !strings.Contains(body, "deaddrop_secrets_created_total") {
+		t.Fatal(body)
+	}
+	if !strings.Contains(body, `deaddrop_secrets_fetched_total{result="ok"}`) &&
+		!strings.Contains(body, `deaddrop_secrets_fetched_total{otel_scope_name=`) {
+		if !strings.Contains(body, "deaddrop_secrets_fetched_total") {
+			t.Fatal(body)
+		}
+	}
+	if !strings.Contains(body, "deaddrop_secrets_burned_total") {
+		t.Fatal(body)
+	}
+	if strings.Contains(body, cr.ID) {
+		t.Fatal("metrics leaked secret id")
 	}
 }
