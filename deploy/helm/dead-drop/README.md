@@ -30,7 +30,7 @@ Install the published chart:
 
 ```bash
 helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
-  --version 0.1.8 \
+  --version 0.1.9 \
   -n dead-drop --create-namespace \
   -f deploy/helm/dead-drop/values.local.yaml
 ```
@@ -48,7 +48,7 @@ To pull the image from Docker Hub instead of GHCR, set this in the overlay:
 ```yaml
 image:
   repository: docker.io/donkeyx/dead-drop
-  tag: "0.1.8"
+  tag: "0.1.9"
 ```
 
 If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[0].name=ghcr-pull-secret`.
@@ -57,7 +57,7 @@ If the GHCR packages are private, add a pull secret and `--set imagePullSecrets[
 
 Image publish stays on the `ci` environment. Cluster changes use a separate **`production`** environment. Both live in [`.github/workflows/release.yml`](../../../.github/workflows/release.yml).
 
-A `v*` tag on `master` publishes the multi-arch image and OCI chart, then deploys. **Run workflow** redeploys an existing semver (`0.1.8` / `v0.1.8`) without rebuilding. Master and PRs only run CI — no image, no deploy. The job checks out `v<version>` so the chart matches the image.
+A `v*` tag on `master` publishes the multi-arch image and OCI chart, then deploys. **Run workflow** redeploys an existing semver (`0.1.9` / `v0.1.9`) without rebuilding. Master and PRs only run CI — no image, no deploy. The job checks out `v<version>` so the chart matches the image.
 
 Create the `production` environment on the repo, then add:
 

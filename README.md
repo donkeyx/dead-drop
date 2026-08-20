@@ -56,7 +56,7 @@ dead-drop seal -in secret.txt -out secret.seal -key-out secret.key
 dead-drop open -in secret.seal -out secret.txt -key-file secret.key
 ```
 
-`go install github.com/donkeyx/dead-drop/cmd/dead-drop@latest` if you already have Go. Pipe-to-sh is convenience — pin `VERSION` or read `install.sh` first.
+`go install github.com/donkeyx/dead-drop/cmd/dead-drop@latest` if you already have Go. Pipe-to-sh is convenience — pin `VERSION` or read `install.sh` first. SHA256 is always checked. If `gh` is on your PATH, `install.sh` also verifies GitHub artifact attestations (`SKIP_ATTEST=1` to skip).
 
 **curl** the API with a blob you already sealed (`Content-Type: application/octet-stream`, `X-Seal-TTL`, `X-Seal-Burn`). Prefer `dead-drop put` unless you are wiring something else.
 
@@ -105,7 +105,7 @@ kubectl create secret generic dead-drop-db \
 
 cp deploy/helm/dead-drop/values.example.yaml deploy/helm/dead-drop/values.local.yaml
 helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
-  --version 0.1.8 \
+  --version 0.1.9 \
   -n dead-drop --create-namespace \
   -f deploy/helm/dead-drop/values.local.yaml
 ```

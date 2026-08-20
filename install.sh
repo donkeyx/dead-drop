@@ -2,7 +2,8 @@
 # Install the latest dead-drop CLI from GitHub Releases.
 #   curl -fsSL https://raw.githubusercontent.com/donkeyx/dead-drop/master/install.sh | sh
 #
-# Override with PREFIX=/usr/local/bin or VERSION=v0.1.8
+# Override with PREFIX=/usr/local/bin or VERSION=v0.1.9
+# SKIP_ATTEST=1 skips GitHub provenance if gh is installed.
 set -eu
 
 REPO="donkeyx/dead-drop"
@@ -60,6 +61,15 @@ elif command -v shasum >/dev/null 2>&1; then
   [ "$got" = "$want" ] || die "checksum mismatch"
 else
   die "need sha256sum or shasum to verify the download"
+fi
+
+if [ "${SKIP_ATTEST:-}" = "1" ]; then
+  say "skip provenance (SKIP_ATTEST=1)"
+elif command -v gh >/dev/null 2>&1; then
+  say "verifying GitHub attestation"
+  gh attestation verify "$tmp/$asset" --repo "$REPO" || die "attestation failed"
+else
+  say "skip provenance (install GitHub CLI to verify attestations)"
 fi
 
 chmod 0755 "$tmp/$asset"
