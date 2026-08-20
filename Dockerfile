@@ -3,8 +3,9 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
+ARG VERSION=dev
 RUN mkdir -p /out/web/static \
- && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/dead-drop ./cmd/dead-drop \
+ && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X github.com/donkeyx/dead-drop/internal/version.Version=${VERSION}" -o /out/dead-drop ./cmd/dead-drop \
  && GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -o /out/web/static/dead-drop.wasm ./cmd/dead-drop-wasm \
  && cp "$(go env GOROOT)/lib/wasm/wasm_exec.js" /out/web/static/wasm_exec.js
 
