@@ -57,9 +57,16 @@ func Start(ctx context.Context) error {
 }
 
 func start(ctx context.Context) error {
+	host, _ := os.Hostname()
+	if host == "" {
+		host = "unknown"
+	}
 	res, err := resource.New(ctx,
 		resource.WithFromEnv(),
-		resource.WithAttributes(semconv.ServiceName("dead-drop")),
+		resource.WithAttributes(
+			semconv.ServiceName("dead-drop"),
+			semconv.ServiceInstanceID(host),
+		),
 	)
 	if err != nil {
 		return err
