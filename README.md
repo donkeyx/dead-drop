@@ -18,7 +18,7 @@ A dead drop for secrets. The browser (or CLI) encrypts **before** upload. The ke
 
 Handy when a password-manager share isn't an option — an API token, a private key, a small kubeconfig — or you just need to move a secret between your own devices. Don't paste it into Slack or Discord and use the channel as a clipboard; those histories keep a copy. Burn-after-read and a short TTL are on by default so the drop doesn't hang around.
 
-Don't want to run anything? Use **[drop.donkeyx.dev](https://drop.donkeyx.dev/)** in the browser. Self-host if you don't want to trust this origin (see [Not magic](#not-magic)).
+**Browser:** [drop.donkeyx.dev](https://drop.donkeyx.dev/) — you trust the JS we serve. **CLI:** encrypt on your machine (`get` a hosted drop, or `put` to a server you run). **Your own instance:** Docker / Helm. See [Not magic](#not-magic).
 
 ```
 https://your.host/s/<id>#<key>
@@ -35,21 +35,30 @@ Same donkey stable as [tcp-wait](https://github.com/donkeyx/tcp-wait) / [cluster
 
 ## Leave a drop
 
-**Browser:** [drop.donkeyx.dev](https://drop.donkeyx.dev/) — type a secret or attach a file (max 16 MiB), copy the link. Same UI if you self-host. Encryption runs in WASM in the page. The server response is an id and path only — no fragment key.
+**Browser:** [drop.donkeyx.dev](https://drop.donkeyx.dev/) — type a secret or attach a file (max 16 MiB), copy the link. Encryption is WASM in the page. Hosted **create** is browser-only (Cloudflare Turnstile). Same UI if you self-host.
 
-**CLI** (seal offline, or put over the network):
+**CLI** (install latest, checksummed):
 
 ```bash
-go build -o bin/dead-drop ./cmd/dead-drop
-
-# keep the key on your machine
-./bin/dead-drop seal -in secret.txt -out secret.seal -key-out secret.key
-./bin/dead-drop open -in secret.seal -out secret.txt -key-file secret.key
-
-# or seal client-side, upload ciphertext, print the share link (includes #key)
-./bin/dead-drop put -server https://drop.donkeyx.dev -in secret.txt
-./bin/dead-drop get -out secret.txt 'https://drop.donkeyx.dev/s/ID#KEY'
+curl -fsSL https://raw.githubusercontent.com/donkeyx/dead-drop/master/install.sh | sh
+# PREFIX=~/.local/bin VERSION=v0.1.8 sh install.sh   # pin / custom path
 ```
+
+```bash
+# receive a drop (hosted get is fine)
+dead-drop get -out secret.txt 'https://drop.donkeyx.dev/s/ID#KEY'
+
+# leave a drop on a server *you* run (not turnstile)
+dead-drop put -server http://127.0.0.1:8080 -in secret.txt
+
+# offline, no network
+dead-drop seal -in secret.txt -out secret.seal -key-out secret.key
+dead-drop open -in secret.seal -out secret.txt -key-file secret.key
+```
+
+`go install github.com/donkeyx/dead-drop/cmd/dead-drop@latest` if you already have Go. Pipe-to-sh is convenience — pin `VERSION` or read `install.sh` first.
+
+**curl** the API with a blob you already sealed (`Content-Type: application/octet-stream`, `X-Seal-TTL`, `X-Seal-Burn`). Prefer `dead-drop put` unless you are wiring something else.
 
 Passphrases come from the environment, never argv:
 
@@ -67,7 +76,7 @@ Burn-after-read is **on** by default. A concurrent burn `Take` has one winner; a
 | Ciphertext, TTL, burn flag | Plaintext |
 | Size / timestamps | Fragment key (`#…`) |
 
-If you use the **hosted UI**, you still trust the JS/WASM we serve. XSS or a malicious deploy can steal keys. The offline CLI is the paranoia path. Self-host if you do not trust this origin.
+If you use the **hosted UI**, you still trust the JS/WASM we serve. XSS or a malicious deploy can steal keys. The CLI encrypts on your machine; hosted create still needs the browser because of the human check. Self-host if you do not trust this origin.
 
 No CORS. No accounts. No “zero-knowledge” badge — just client-side encryption and an operator who cannot read the disk.
 
@@ -96,7 +105,7 @@ kubectl create secret generic dead-drop-db \
 
 cp deploy/helm/dead-drop/values.example.yaml deploy/helm/dead-drop/values.local.yaml
 helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
-  --version 0.1.7 \
+  --version 0.1.8 \
   -n dead-drop --create-namespace \
   -f deploy/helm/dead-drop/values.local.yaml
 ```

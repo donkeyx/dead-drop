@@ -215,7 +215,7 @@ const uiShell = `<!doctype html>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
   <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
-  <link rel="stylesheet" href="/static/skin.css?v=11">
+  <link rel="stylesheet" href="/static/skin.css?v=12">
 </head>
 <body>
   <div class="hold-lamp" aria-hidden="true"></div>
@@ -292,7 +292,7 @@ const aboutPage = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How dead-drop works</title>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
-  <link rel="stylesheet" href="/static/skin.css?v=11">
+  <link rel="stylesheet" href="/static/skin.css?v=12">
 </head>
 <body>
   <div class="hold-lamp" aria-hidden="true"></div>
@@ -308,15 +308,23 @@ const aboutPage = `<!doctype html>
     </header>
     <main class="panel">
       <h2>How it works</h2>
-      <p>Your browser encrypts the text or file before it leaves your device. The server stores and returns only the encrypted blob.</p>
-      <p>The decryption key stays in the URL fragment after the <code>#</code>. Browsers do not send URL fragments in HTTP requests, so the server never receives that key.</p>
+      <p>The secret is encrypted before it is uploaded. The server only ever stores ciphertext. The key lives in the URL fragment after <code>#</code> — browsers do not send that to the server.</p>
+      <h2>Three ways</h2>
+      <ul>
+        <li><b>Browser</b> — this site. Fast. You trust the JavaScript we served you.</li>
+        <li><b>CLI</b> — encrypt on your machine. Use it to <code>get</code> a drop, or <code>put</code> to a server you run if you do not trust this origin's JS. Hosted create is browser-only (human check).</li>
+        <li><b>Your own instance</b> — same protocol, Docker or Helm. Then the CLI talks to you.</li>
+      </ul>
+      <pre><code>curl -fsSL https://raw.githubusercontent.com/donkeyx/dead-drop/master/install.sh | sh
+dead-drop get -out secret.txt 'https://drop.donkeyx.dev/s/ID#KEY'</code></pre>
+      <p>Pin a tag instead of <code>master</code> if you do not want to pipe latest. Checksums are verified. <code>go install github.com/donkeyx/dead-drop/cmd/dead-drop@latest</code> if you already have Go.</p>
       <h2>What to trust</h2>
       <ul>
-        <li>The source code is public at <a href="https://github.com/donkeyx/dead-drop">github.com/donkeyx/dead-drop</a>.</li>
+        <li>The source is public at <a href="https://github.com/donkeyx/dead-drop">github.com/donkeyx/dead-drop</a>.</li>
         <li>Burn-after-read is atomic: one successful download consumes a drop.</li>
-        <li>Client-side encryption is not a promise that the hosting server is harmless. Verify the code or run your own instance if you do not trust this one.</li>
+        <li>Client-side encryption is not a promise that this host is harmless. Verify the code or run your own.</li>
       </ul>
-      <p class="warning">Do not use this service for anything where you cannot accept the risk of a compromised browser, server, or deployment.</p>
+      <p class="warning">Do not use this for anything where you cannot accept a compromised browser, server, or deploy.</p>
       <p class="foot"><a href="/">Back to dead-drop</a><span class="ver"> · v{{.Version}}</span></p>
     </main>
   </div>

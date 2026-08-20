@@ -37,6 +37,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: install.sh syntax
+        run: sh -n install.sh
+
       - name: Set up Go
         uses: actions/setup-go@v7
         with:

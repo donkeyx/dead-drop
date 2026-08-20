@@ -354,7 +354,7 @@ func TestUIHeadersAndShell(t *testing.T) {
 	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("password manager")) {
 		t.Fatalf("home response: %d %s", rr.Code, rr.Body.String())
 	}
-	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=11")) {
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=12")) {
 		t.Fatal("UI shell does not load the cache-busted skin")
 	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte(`class="ver"`)) || !bytes.Contains(rr.Body.Bytes(), []byte("vdev")) {
@@ -459,6 +459,9 @@ func TestAboutPage(t *testing.T) {
 	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/about", nil))
 	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("How it works")) {
 		t.Fatalf("about response: %d %s", rr.Code, rr.Body.String())
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("install.sh")) {
+		t.Fatal("about page missing CLI install")
 	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte("vdev")) {
 		t.Fatal("about page missing version")
