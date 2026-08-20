@@ -166,6 +166,48 @@ jobs:
           helm push /tmp/helm/dead-drop-${VERSION}.tgz "${HELM_OCI}"
           echo "Pushed ${HELM_OCI}/dead-drop:${VERSION}"
 
+  cli:
+    name: Publish CLI binaries
+    needs: version
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.ref }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Build and attach
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ver="${VERSION}"
+          mkdir -p dist
+          ldflags="-s -w -X github.com/donkeyx/dead-drop/internal/version.Version=${ver}"
+          for pair in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
+            os="${pair%/*}"
+            arch="${pair#*/}"
+            out="dist/dead-drop-${os}-${arch}"
+            echo "build ${out}"
+            CGO_ENABLED=0 GOOS="${os}" GOARCH="${arch}" go build -trimpath -ldflags="${ldflags}" -o "${out}" ./cmd/dead-drop
+          done
+          (cd dist && sha256sum dead-drop-* > SHA256SUMS)
+          tag="v${ver}"
+          if gh release view "${tag}" >/dev/null 2>&1; then
+            gh release upload "${tag}" dist/* --clobber
+          else
+            gh release create "${tag}" --title "dead-drop ${ver}" --generate-notes dist/*
+          fi
+
   deploy:
     name: Helm upgrade
     needs: [version, publish]

@@ -488,6 +488,15 @@ output a {
 .info-page .panel { max-width: 100%; }
 .info-page li { margin: 0.65rem 0; }
 .info-page code { color: var(--brass); }
+.info-page pre {
+  margin: 0.9rem 0;
+  padding: 0.75rem 0.9rem;
+  overflow-x: auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  font: 0.82rem/1.45 ui-monospace, "Cascadia Code", monospace;
+}
 
 [hidden] { display: none !important; }
 
