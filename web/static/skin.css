@@ -327,6 +327,10 @@ output a {
   letter-spacing: 0.02em;
 }
 
+.foot .ver {
+  font-variant-numeric: tabular-nums;
+}
+
 .foot b { color: var(--brass); font-weight: 650; }
 .foot a, .info-page a { color: var(--brass); }
 

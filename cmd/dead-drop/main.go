@@ -4,6 +4,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/donkeyx/dead-drop/internal/version"
 )
 
 // Exit codes (DESIGN.md).
@@ -37,7 +39,7 @@ func main() {
 		usage()
 		code = exitOK
 	case "version", "-version", "--version":
-		fmt.Println("dead-drop dev")
+		fmt.Println("dead-drop " + version.String())
 		code = exitOK
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command %q\n\n", os.Args[1])

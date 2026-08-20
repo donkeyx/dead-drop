@@ -357,6 +357,9 @@ func TestUIHeadersAndShell(t *testing.T) {
 	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=7")) {
 		t.Fatal("UI shell does not load the cache-busted skin")
 	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte(`class="ver"`)) || !bytes.Contains(rr.Body.Bytes(), []byte("vdev")) {
+		t.Fatal("UI shell missing version")
+	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte("id=\"drop-stats\"")) {
 		t.Fatal("UI shell missing stats footer")
 	}
@@ -456,6 +459,9 @@ func TestAboutPage(t *testing.T) {
 	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/about", nil))
 	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("How it works")) {
 		t.Fatalf("about response: %d %s", rr.Code, rr.Body.String())
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("vdev")) {
+		t.Fatal("about page missing version")
 	}
 }
 

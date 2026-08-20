@@ -21,6 +21,7 @@ import (
 	"github.com/donkeyx/dead-drop/internal/observe"
 	"github.com/donkeyx/dead-drop/internal/ratelimit"
 	"github.com/donkeyx/dead-drop/internal/turnstile"
+	"github.com/donkeyx/dead-drop/internal/version"
 	"github.com/donkeyx/dead-drop/store"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -35,6 +36,7 @@ type Server struct {
 	get       *ratelimit.Limiter
 	turnstile *turnstile.Client
 	ui        *template.Template
+	about     *template.Template
 }
 
 // New wires handlers over an open store.
@@ -54,6 +56,7 @@ func New(cfg config.Config, st store.Store, log *slog.Logger) *Server {
 		get:       ratelimit.New(cfg.GetPerIP, cfg.GetWindow),
 		turnstile: ts,
 		ui:        template.Must(template.New("ui").Parse(uiShell)),
+		about:     template.Must(template.New("about").Parse(aboutPage)),
 	}
 }
 
@@ -116,7 +119,9 @@ func (s *Server) handleReveal(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAbout(w http.ResponseWriter, r *http.Request) {
-	s.writePage(w, aboutPage)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_ = s.about.Execute(w, struct{ Version string }{Version: version.String()})
 }
 
 func (s *Server) handleFavicon(w http.ResponseWriter, r *http.Request) {
@@ -179,7 +184,10 @@ func (s *Server) writeShell(w http.ResponseWriter, r *http.Request) {
 	if s.smokeBypassed(r) {
 		key = ""
 	}
-	_ = s.ui.Execute(w, struct{ TurnstileSiteKey string }{TurnstileSiteKey: key})
+	_ = s.ui.Execute(w, struct {
+		TurnstileSiteKey string
+		Version          string
+	}{TurnstileSiteKey: key, Version: version.String()})
 }
 
 func (s *Server) smokeBypassed(r *http.Request) bool {
@@ -196,12 +204,6 @@ func (s *Server) checkCreateProof(r *http.Request, ip string) error {
 		token = r.Header.Get("X-Turnstile-Token")
 	}
 	return s.turnstile.Verify(token, ip)
-}
-
-func (s *Server) writePage(w http.ResponseWriter, page string) {
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, _ = io.WriteString(w, page)
 }
 
 const uiShell = `<!doctype html>
@@ -272,7 +274,7 @@ const uiShell = `<!doctype html>
         <output id="reveal-result" aria-live="polite"></output>
       </section>
     </main>
-    <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read. <a href="/about">How it works</a></p>
+    <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read. <a href="/about">How it works</a><span class="ver"> · v{{.Version}}</span></p>
     <p class="foot stats" id="drop-stats" hidden></p>
   </div>
   <script src="/static/wasm_exec.js"></script>
@@ -311,7 +313,7 @@ const aboutPage = `<!doctype html>
         <li>Client-side encryption is not a promise that the hosting server is harmless. Verify the code or run your own instance if you do not trust this one.</li>
       </ul>
       <p class="warning">Do not use this service for anything where you cannot accept the risk of a compromised browser, server, or deployment.</p>
-      <p class="foot"><a href="/">Back to dead-drop</a></p>
+      <p class="foot"><a href="/">Back to dead-drop</a><span class="ver"> · v{{.Version}}</span></p>
     </main>
   </div>
 </body>

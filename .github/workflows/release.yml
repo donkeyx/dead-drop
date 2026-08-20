@@ -137,6 +137,8 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: false
           sbom: false
+          build-args: |
+            VERSION=${{ needs.version.outputs.version }}
 
       - name: Update Docker Hub README
         continue-on-error: true
