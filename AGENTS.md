@@ -26,6 +26,7 @@
 - PostgreSQL does not make the in-memory rate limiter global; shared rate limiting is still a separate deployment concern for HPA.
 - Hosted create can require Cloudflare Turnstile (`DEADDROP_TURNSTILE_SECRET` + site key). Take / reveal must stay unchallenged. Empty env keeps self-host and CI unchanged. `DEADDROP_SMOKE_BYPASS` matching `x-dead-drop-smoke` skips Turnstile for live smoke.
 - `/metrics` is only served on `DEADDROP_METRICS_ADDR` (Helm `:9090`), never on the public mux or ingress. Counters and traces must not include secret ids, IPs, or ciphertext. Grafana Cloud OTLP is env-gated (`OTEL_EXPORTER_OTLP_ENDPOINT`); empty = no export.
+- `GET /api/v1/stats` is coarse durable totals only (created, burned, expired, passphrase). No ids, rates, or waiting counts. Increment in the same store transaction as the event.
 - Unused drops die on TTL (default 24h). `dead-drop expire` deletes those rows; the Helm CronJob ticks it. Burn remains first-Take only.
 - Keep the no-CORS design and same-origin browser crypto boundary. The server must never receive plaintext or decrypt keys.
 - `DEADDROP_TRUST_PROXY=true` requires a non-empty trusted CIDR list; fail closed rather than trusting arbitrary forwarded headers.
@@ -33,5 +34,5 @@
 ## Current Scope
 
 - PR1–PR7 are complete: SEAL library, offline CLI, FS/SQLite/Postgres stores, HTTP API, network put/get, WASM crypto/vector harness, and the browser create/reveal/`/about` UI.
-- CI (PR + master) is tests and helm lint only. A `v*` tag on master publishes image + chart, then deploys; **Run workflow** on Release redeploys that tag. Chart is 0.1.4. No image publish from master. If HTMX is added later for non-sensitive chrome, it must never submit plaintext, fragment keys, or passphrases.
+- CI (PR + master) is tests and helm lint only. A `v*` tag on master publishes image + chart, then deploys; **Run workflow** on Release redeploys that tag. Chart is 0.1.5. No image publish from master. If HTMX is added later for non-sensitive chrome, it must never submit plaintext, fragment keys, or passphrases.
 - The design and README are the source of product/security constraints; preserve their wording around “client-side encrypted” and avoid unqualified “zero-knowledge” claims.

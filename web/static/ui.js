@@ -116,6 +116,7 @@
       }
       meta.textContent = parts.join(" ");
       result.append(label, row, meta);
+      loadDropStats();
       byId("secret").value = "";
       byId("file").value = "";
       byId("passphrase").value = "";
@@ -290,10 +291,26 @@
   document.querySelectorAll("button").forEach((button) => {
     button.dataset.label = button.textContent;
   });
+  async function loadDropStats() {
+    const el = byId("drop-stats");
+    if (!el) return;
+    try {
+      const res = await fetch("/api/v1/stats", { headers: { Accept: "application/json" } });
+      if (!res.ok) return;
+      const s = await res.json();
+      const n = (v) => Number(v || 0).toLocaleString();
+      el.textContent = n(s.created) + " created · " + n(s.burned) + " burned · " + n(s.expired) + " expired";
+      el.hidden = false;
+    } catch (_) {
+      /* keep hidden */
+    }
+  }
+
   if (location.pathname.startsWith("/s/")) {
     byId("create-panel").hidden = true;
     byId("reveal-panel").hidden = false;
   } else {
     setupTurnstile().catch(() => {});
   }
+  loadDropStats();
 })();

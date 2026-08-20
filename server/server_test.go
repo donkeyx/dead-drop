@@ -354,8 +354,11 @@ func TestUIHeadersAndShell(t *testing.T) {
 	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("Client-side encrypted")) {
 		t.Fatalf("home response: %d %s", rr.Code, rr.Body.String())
 	}
-	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=5")) {
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=6")) {
 		t.Fatal("UI shell does not load the cache-busted skin")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("id=\"drop-stats\"")) {
+		t.Fatal("UI shell missing stats footer")
 	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/favicon.ico?v=1")) {
 		t.Fatal("UI shell does not load the favicon")
@@ -390,6 +393,60 @@ func TestUIHeadersAndShell(t *testing.T) {
 	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/s/example", nil))
 	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("open-drop")) {
 		t.Fatalf("reveal response: %d %s", rr.Code, rr.Body.String())
+	}
+}
+
+func TestStatsAPI(t *testing.T) {
+	srv, _ := testServer(t)
+	h := srv.Handler()
+
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/api/v1/stats", nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("empty stats %d %s", rr.Code, rr.Body.String())
+	}
+	var zero store.Counters
+	if err := json.Unmarshal(rr.Body.Bytes(), &zero); err != nil {
+		t.Fatal(err)
+	}
+	if zero != (store.Counters{}) {
+		t.Fatalf("zero %+v", zero)
+	}
+
+	mk, err := blob.GenerateMasterKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkg, err := blob.Seal([]byte("p"), mk, blob.SealOptions{Passphrase: []byte("hunter2")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/secrets", bytes.NewReader(pkg))
+	req.Header.Set("Content-Type", "application/octet-stream")
+	req.Header.Set("X-Seal-TTL", "1h")
+	req.Header.Set("X-Seal-Burn", "1")
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("create %d %s", rr.Code, rr.Body.String())
+	}
+	var cr createResp
+	if err := json.Unmarshal(rr.Body.Bytes(), &cr); err != nil {
+		t.Fatal(err)
+	}
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/api/v1/secrets/"+cr.ID, nil))
+	if rr.Code != http.StatusOK {
+		t.Fatalf("take %d", rr.Code)
+	}
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/api/v1/stats", nil))
+	var got store.Counters
+	if err := json.Unmarshal(rr.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Created != 1 || got.Burned != 1 || got.Passphrase != 1 || got.Expired != 0 {
+		t.Fatalf("got %+v", got)
 	}
 }
 

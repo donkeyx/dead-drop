@@ -288,6 +288,11 @@ output a {
   font-size: 0.8rem;
 }
 
+.foot.stats {
+  margin-top: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
 .foot b { color: var(--brass); font-weight: 650; }
 .foot a, .info-page a { color: var(--brass); }
 

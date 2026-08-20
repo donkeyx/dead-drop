@@ -28,6 +28,8 @@ func TestMetricsHandlerAfterStart(t *testing.T) {
 	Fetched(context.Background(), "ok")
 	Fetched(context.Background(), "not_found")
 	Burned(context.Background())
+	Expired(context.Background(), 2)
+	Passphrase(context.Background())
 
 	rr := httptest.NewRecorder()
 	MetricsHandler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/metrics", nil))
@@ -40,6 +42,8 @@ func TestMetricsHandlerAfterStart(t *testing.T) {
 		"deaddrop_secrets_created_total",
 		"deaddrop_secrets_fetched_total",
 		"deaddrop_secrets_burned_total",
+		"deaddrop_secrets_expired_total",
+		"deaddrop_secrets_passphrase_total",
 	} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("missing %s in\n%s", want, got)

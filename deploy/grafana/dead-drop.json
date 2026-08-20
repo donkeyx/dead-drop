@@ -1,6 +1,8 @@
 {
-  "annotations": { "list": [] },
-  "description": "Hosted dead-drop product counters (OTLP → Mimir). Creates, burns, Takes, 429s, 403s. No secret ids. Not the GrafanaCloud usage folder.",
+  "annotations": {
+    "list": []
+  },
+  "description": "Hosted dead-drop product counters (OTLP \u2192 Mimir). Creates, burns, expired, passphrase, Takes, 429s, 403s. No secret ids. Not the GrafanaCloud usage folder.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -12,11 +14,22 @@
       "type": "stat",
       "title": "Creates",
       "id": 1,
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_secrets_created_total[$__range])) or vector(0)",
           "instant": true,
@@ -27,7 +40,10 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "blue", "mode": "fixed" },
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
           "decimals": 0,
           "noValue": "0",
           "unit": "short"
@@ -38,7 +54,13 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       }
     },
@@ -46,11 +68,22 @@
       "type": "stat",
       "title": "Burns",
       "id": 2,
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 3,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_secrets_burned_total[$__range])) or vector(0)",
           "instant": true,
@@ -61,7 +94,10 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "orange", "mode": "fixed" },
+          "color": {
+            "fixedColor": "orange",
+            "mode": "fixed"
+          },
           "decimals": 0,
           "noValue": "0",
           "unit": "short"
@@ -72,7 +108,121 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Expired",
+      "id": 10,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 6,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(deaddrop_secrets_expired_total[$__range])) or vector(0)",
+          "instant": true,
+          "legendFormat": "expired",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "yellow",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "noValue": "0",
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Passphrase",
+      "id": 11,
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 9,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(deaddrop_secrets_passphrase_total[$__range])) or vector(0)",
+          "instant": true,
+          "legendFormat": "passphrase",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "semi-dark-blue",
+            "mode": "fixed"
+          },
+          "decimals": 0,
+          "noValue": "0",
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       }
     },
@@ -80,11 +230,22 @@
       "type": "stat",
       "title": "Takes ok",
       "id": 3,
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_secrets_fetched_total{result=\"ok\"}[$__range])) or vector(0)",
           "instant": true,
@@ -95,7 +256,10 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "green", "mode": "fixed" },
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
           "decimals": 0,
           "noValue": "0",
           "unit": "short"
@@ -106,7 +270,13 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       }
     },
@@ -114,11 +284,22 @@
       "type": "stat",
       "title": "Takes miss",
       "id": 4,
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 15,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_secrets_fetched_total{result=\"not_found\"}[$__range])) or vector(0)",
           "instant": true,
@@ -129,7 +310,10 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "yellow", "mode": "fixed" },
+          "color": {
+            "fixedColor": "super-light-yellow",
+            "mode": "fixed"
+          },
           "decimals": 0,
           "noValue": "0",
           "unit": "short"
@@ -140,7 +324,13 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       }
     },
@@ -148,11 +338,22 @@
       "type": "stat",
       "title": "429s",
       "id": 5,
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 18,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_http_requests_total{code=\"429\"}[$__range])) or vector(0)",
           "instant": true,
@@ -163,7 +364,10 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "red", "mode": "fixed" },
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
           "decimals": 0,
           "noValue": "0",
           "unit": "short"
@@ -174,7 +378,13 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       }
     },
@@ -182,11 +392,22 @@
       "type": "stat",
       "title": "403s",
       "id": 6,
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+      "gridPos": {
+        "h": 4,
+        "w": 3,
+        "x": 21,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_http_requests_total{code=\"403\"}[$__range])) or vector(0)",
           "instant": true,
@@ -197,7 +418,10 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "fixedColor": "purple", "mode": "fixed" },
+          "color": {
+            "fixedColor": "purple",
+            "mode": "fixed"
+          },
           "decimals": 0,
           "noValue": "0",
           "unit": "short"
@@ -208,19 +432,36 @@
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       }
     },
     {
       "type": "timeseries",
-      "title": "Creates, burns, Takes",
+      "title": "Creates, burns, expired, passphrase",
       "id": 7,
-      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 4 },
-      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_secrets_created_total[$__rate_interval]))",
           "legendFormat": "creates",
@@ -228,7 +469,10 @@
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_secrets_burned_total[$__rate_interval]))",
           "legendFormat": "burns",
@@ -236,7 +480,10 @@
           "refId": "B"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_secrets_fetched_total{result=\"ok\"}[$__rate_interval]))",
           "legendFormat": "takes ok",
@@ -244,17 +491,44 @@
           "refId": "C"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_secrets_fetched_total{result=\"not_found\"}[$__rate_interval]))",
           "legendFormat": "takes miss",
           "range": true,
           "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(deaddrop_secrets_expired_total[$__rate_interval]))",
+          "legendFormat": "expired",
+          "range": true,
+          "refId": "E"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(deaddrop_secrets_passphrase_total[$__rate_interval]))",
+          "legendFormat": "passphrase",
+          "range": true,
+          "refId": "F"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 50,
@@ -262,7 +536,10 @@
             "pointSize": 5,
             "showPoints": "never",
             "spanNulls": false,
-            "stacking": { "group": "A", "mode": "none" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
           },
           "min": 0,
           "unit": "short"
@@ -270,19 +547,40 @@
         "overrides": []
       },
       "options": {
-        "legend": { "calcs": ["sum"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       }
     },
     {
       "type": "timeseries",
       "title": "Create / Take HTTP",
       "id": 8,
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 13
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_http_requests_total{route=~\"/api/v1/secrets.*\"}[$__rate_interval])) by (code, route)",
           "legendFormat": "{{route}} {{code}}",
@@ -292,13 +590,18 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 40,
             "lineWidth": 1,
             "showPoints": "never",
-            "stacking": { "group": "A", "mode": "none" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
           },
           "min": 0,
           "unit": "short"
@@ -306,19 +609,40 @@
         "overrides": []
       },
       "options": {
-        "legend": { "calcs": ["sum"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       }
     },
     {
       "type": "timeseries",
       "title": "429 / 403",
       "id": 9,
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "grafanacloud-prom"
+      },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "grafanacloud-prom"
+          },
           "editorMode": "code",
           "expr": "sum(increase(deaddrop_http_requests_total{code=~\"429|403\"}[$__rate_interval])) by (code, route)",
           "legendFormat": "{{route}} {{code}}",
@@ -328,13 +652,18 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "drawStyle": "bars",
             "fillOpacity": 50,
             "lineWidth": 1,
             "showPoints": "never",
-            "stacking": { "group": "A", "mode": "none" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
           },
           "min": 0,
           "noValue": "0",
@@ -343,16 +672,33 @@
         "overrides": []
       },
       "options": {
-        "legend": { "calcs": ["sum"], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "desc" }
+        "legend": {
+          "calcs": [
+            "sum"
+          ],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       }
     }
   ],
   "refresh": "1m",
   "schemaVersion": 39,
-  "tags": ["dead-drop"],
-  "templating": { "list": [] },
-  "time": { "from": "now-24h", "to": "now" },
+  "tags": [
+    "dead-drop"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "dead-drop",

@@ -57,7 +57,21 @@ CREATE TABLE IF NOT EXISTS secrets (
   fmt_version INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_secrets_expires ON secrets(expires_at);
+CREATE TABLE IF NOT EXISTS stats (
+  name  TEXT PRIMARY KEY,
+  value INTEGER NOT NULL DEFAULT 0
+);
 `)
+	return err
+}
+
+func sqliteIncr(ctx context.Context, e execer, name string, n int64) error {
+	if n == 0 {
+		return nil
+	}
+	_, err := e.ExecContext(ctx, `
+INSERT INTO stats (name, value) VALUES (?, ?)
+ON CONFLICT(name) DO UPDATE SET value = value + excluded.value`, name, n)
 	return err
 }
 
@@ -74,7 +88,12 @@ func (s *SQLite) Create(ctx context.Context, meta Meta, blob []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	meta.Size = int64(len(blob))
-	_, err := s.db.ExecContext(ctx, `
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+	_, err = tx.ExecContext(ctx, `
 INSERT INTO secrets (id, blob, created_at, expires_at, burn, size, fmt_version)
 VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		meta.ID,
@@ -91,7 +110,15 @@ VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		}
 		return err
 	}
-	return nil
+	if err := sqliteIncr(ctx, tx, statCreated, 1); err != nil {
+		return err
+	}
+	if meta.HasPassphrase {
+		if err := sqliteIncr(ctx, tx, statPassphrase, 1); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 func (s *SQLite) Take(ctx context.Context, id string) (Record, error) {
@@ -127,6 +154,9 @@ SELECT blob, created_at, expires_at, burn, size, fmt_version FROM secrets WHERE 
 		if _, err := tx.ExecContext(ctx, `DELETE FROM secrets WHERE id = ?`, id); err != nil {
 			return Record{}, err
 		}
+		if err := sqliteIncr(ctx, tx, statExpired, 1); err != nil {
+			return Record{}, err
+		}
 		if err := tx.Commit(); err != nil {
 			return Record{}, err
 		}
@@ -153,6 +183,9 @@ SELECT blob, created_at, expires_at, burn, size, fmt_version FROM secrets WHERE 
 		n, _ := res.RowsAffected()
 		if n == 0 {
 			return Record{}, ErrNotFound
+		}
+		if err := sqliteIncr(ctx, tx, statBurned, 1); err != nil {
+			return Record{}, err
 		}
 	}
 
@@ -210,12 +243,43 @@ func (s *SQLite) Delete(ctx context.Context, id string) error {
 func (s *SQLite) DeleteExpired(ctx context.Context, now time.Time) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	res, err := s.db.ExecContext(ctx, `DELETE FROM secrets WHERE expires_at > 0 AND expires_at <= ?`, now.UTC().Unix())
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() { _ = tx.Rollback() }()
+	res, err := tx.ExecContext(ctx, `DELETE FROM secrets WHERE expires_at > 0 AND expires_at <= ?`, now.UTC().Unix())
 	if err != nil {
 		return 0, err
 	}
 	n, _ := res.RowsAffected()
+	if err := sqliteIncr(ctx, tx, statExpired, n); err != nil {
+		return 0, err
+	}
+	if err := tx.Commit(); err != nil {
+		return 0, err
+	}
 	return int(n), nil
+}
+
+func (s *SQLite) Stats(ctx context.Context) (Counters, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	rows, err := s.db.QueryContext(ctx, `SELECT name, value FROM stats`)
+	if err != nil {
+		return Counters{}, err
+	}
+	defer rows.Close()
+	m := map[string]int64{}
+	for rows.Next() {
+		var name string
+		var value int64
+		if err := rows.Scan(&name, &value); err != nil {
+			return Counters{}, err
+		}
+		m[name] = value
+	}
+	return countersFromMap(m), rows.Err()
 }
 
 func (s *SQLite) Count(ctx context.Context) (int64, error) {
