@@ -215,7 +215,7 @@ const uiShell = `<!doctype html>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
   <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
-  <link rel="stylesheet" href="/static/skin.css?v=8">
+  <link rel="stylesheet" href="/static/skin.css?v=9">
 </head>
 <body>
   <div class="wrap">
@@ -274,8 +274,8 @@ const uiShell = `<!doctype html>
         <output id="reveal-result" aria-live="polite"></output>
       </section>
     </main>
-    <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read. <a href="/about">How it works</a><span class="ver"> · v{{.Version}}</span></p>
-    <p class="foot stats" id="drop-stats" hidden></p>
+    <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read. <a href="/about">How it works</a></p>
+    <p class="foot meta"><span id="drop-stats" hidden></span><span class="ver">v{{.Version}}</span></p>
   </div>
   <script src="/static/wasm_exec.js"></script>
   <script src="/static/deaddrop.js"></script>
@@ -290,7 +290,7 @@ const aboutPage = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How dead-drop works</title>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
-  <link rel="stylesheet" href="/static/skin.css?v=8">
+  <link rel="stylesheet" href="/static/skin.css?v=9">
 </head>
 <body>
   <div class="wrap info-page">

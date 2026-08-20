@@ -23,13 +23,46 @@ html, body { margin: 0; min-height: 100%; }
 
 body {
   min-height: 100vh;
+  position: relative;
+  isolation: isolate;
   background:
-    radial-gradient(1200px 600px at 50% -10%, #2a2610 0%, transparent 55%),
-    repeating-linear-gradient(90deg, transparent, transparent 47px, rgba(212, 160, 23, 0.03) 48px),
+    radial-gradient(ellipse 90% 48% at 50% -12%, rgba(42, 38, 16, 0.9), transparent 62%),
+    radial-gradient(ellipse 70% 36% at 50% 108%, rgba(0, 0, 0, 0.62), transparent 58%),
+    radial-gradient(ellipse 120% 100% at 50% 42%, transparent 38%, rgba(0, 0, 0, 0.5) 100%),
     var(--bg);
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 47px,
+    rgba(212, 160, 23, 0.07) 47px,
+    rgba(212, 160, 23, 0.07) 48px
+  );
+  mask-image: linear-gradient(90deg, #000 0%, transparent 22%, transparent 78%, #000 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, transparent 22%, transparent 78%, #000 100%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.2;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 .wrap {
+  position: relative;
+  z-index: 1;
   width: min(36rem, calc(100% - 2rem));
   margin: 0 auto;
   padding: 2.25rem 0 3rem;
@@ -360,13 +393,18 @@ output a {
   font-size: 0.8rem;
 }
 
-.foot.stats {
+.foot.meta {
   margin-top: 0.35rem;
   letter-spacing: 0.02em;
 }
 
 .foot .ver {
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+#drop-stats:not([hidden]) + .ver::before {
+  content: " · ";
 }
 
 .foot b { color: var(--brass); font-weight: 650; }
