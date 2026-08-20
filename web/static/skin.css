@@ -127,6 +127,9 @@ textarea::placeholder { color: #716d5d; }
   color: var(--muted);
   font-size: 0.88rem;
 }
+.file-pick[data-name] input[type="file"] {
+  color: transparent;
+}
 .file-pick input[type="file"]::file-selector-button {
   appearance: none;
   margin-right: 0.75rem;
