@@ -351,10 +351,10 @@ func TestUIHeadersAndShell(t *testing.T) {
 	srv, _ := testServer(t)
 	rr := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
-	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("Client-side encrypted")) {
+	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("password manager")) {
 		t.Fatalf("home response: %d %s", rr.Code, rr.Body.String())
 	}
-	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=7")) {
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=8")) {
 		t.Fatal("UI shell does not load the cache-busted skin")
 	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte(`class="ver"`)) || !bytes.Contains(rr.Body.Bytes(), []byte("vdev")) {

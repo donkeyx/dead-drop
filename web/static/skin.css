@@ -59,9 +59,11 @@ body {
 }
 
 .brand .tag {
-  margin: 0.2rem 0 0;
+  margin: 0.35rem 0 0;
+  max-width: 22rem;
   color: var(--muted);
   font-size: 0.92rem;
+  line-height: 1.4;
   letter-spacing: 0.01em;
 }
 
@@ -179,7 +181,46 @@ textarea:focus, input:focus, select:focus, button:focus-visible {
   margin: 0;
   min-height: 6rem;
 }
-.visibility-toggle { flex: 0 0 2.8rem; margin-top: 0; padding: 0.4rem; }
+.visibility-toggle {
+  flex: 0 0 2.8rem;
+  display: grid;
+  place-items: center;
+  margin-top: 0;
+  padding: 0.35rem;
+  background: var(--bg-2);
+  color: var(--brass);
+  box-shadow: inset 0 0 0 1px var(--brass-dim);
+}
+
+.visibility-toggle:hover {
+  filter: brightness(1.08);
+}
+
+.visibility-toggle.peek {
+  box-shadow: inset 0 0 0 1px var(--brass), 0 0 12px rgba(212, 160, 23, 0.22);
+}
+
+.hatch-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  display: block;
+  overflow: visible;
+}
+
+.hatch-icon .slat {
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+}
+
+.visibility-toggle.peek .s1 { transform: translateY(-2.4px) rotate(-13deg); }
+.visibility-toggle.peek .s2 { transform: scaleX(0.82); opacity: 0.28; }
+.visibility-toggle.peek .s3 { transform: translateY(2.4px) rotate(13deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hatch-icon .slat { transition: none; }
+}
 
 input[type="checkbox"] {
   width: 1.05rem;
@@ -189,40 +230,37 @@ input[type="checkbox"] {
   margin-right: 0.4rem;
 }
 
-label:has(#burn) {
-  display: flex;
-  align-items: center;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--ink);
-  margin-top: 0;
-}
-
 .keep-row {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem 1.25rem;
-  margin-top: 1rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-top: 1.15rem;
 }
 
-.ttl-label {
+.keep-opt {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.55rem;
   margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
   color: var(--ink);
 }
 
-.ttl-label select {
+.keep-opt select {
+  font: inherit;
+  color: inherit;
   width: auto;
-  padding: 0.35rem 0.5rem;
+  margin: 0;
+  padding: 0.25rem 0.5rem;
   border: 1px solid var(--line);
   border-radius: 0.35rem;
   background: var(--bg-2);
-  color: inherit;
 }
 
 .keep-meta { margin: 0.45rem 0 0; }

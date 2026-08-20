@@ -18,6 +18,23 @@
     button.textContent = busy ? label : button.dataset.label;
   }
 
+  const hatchMarkup =
+    '<svg class="hatch-icon" viewBox="0 0 32 32" aria-hidden="true">' +
+    '<rect class="slat s1" x="5" y="7" width="22" height="5" rx="1.3"/>' +
+    '<rect class="slat s2" x="5" y="13.5" width="22" height="5" rx="1.3"/>' +
+    '<rect class="slat s3" x="5" y="20" width="22" height="5" rx="1.3"/>' +
+    "</svg>";
+
+  function mountHatch(button) {
+    if (!button || button.querySelector(".hatch-icon")) return;
+    button.replaceChildren();
+    button.insertAdjacentHTML("afterbegin", hatchMarkup);
+  }
+
+  function setPeek(button, open) {
+    button.classList.toggle("peek", !!open);
+  }
+
   async function copyText(text) {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
@@ -164,7 +181,7 @@
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = "visibility-toggle";
-        toggle.textContent = "◉";
+        mountHatch(toggle);
         toggle.setAttribute("aria-label", "Show secret");
         toggle.title = "Show secret";
         toggle.addEventListener("click", () => {
@@ -172,6 +189,7 @@
           const label = hidden ? "Show secret" : "Hide secret";
           toggle.setAttribute("aria-label", label);
           toggle.title = label;
+          setPeek(toggle, !hidden);
         });
 
         const copy = document.createElement("button");
@@ -282,6 +300,7 @@
     else delete wrap.dataset.name;
   });
   document.querySelectorAll("[data-toggle-visibility]").forEach((toggle) => {
+    mountHatch(toggle);
     toggle.addEventListener("click", () => {
       const input = byId(toggle.dataset.toggleVisibility);
       const isSecret = input.tagName === "TEXTAREA";
@@ -296,9 +315,10 @@
       const name = isSecret ? "secret" : "passphrase";
       toggle.setAttribute("aria-label", label + " " + name);
       toggle.title = label + " " + name;
+      setPeek(toggle, nextVisible);
     });
   });
-  document.querySelectorAll("button").forEach((button) => {
+  document.querySelectorAll("button:not(.visibility-toggle)").forEach((button) => {
     button.dataset.label = button.textContent;
   });
   async function loadDropStats() {
