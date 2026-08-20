@@ -64,46 +64,53 @@ body::after {
   position: fixed;
   left: 0;
   right: 0;
-  top: -8%;
-  height: 52vh;
-  z-index: 0;
+  top: 0;
+  height: 42vh;
+  z-index: 1;
   pointer-events: none;
-  background: radial-gradient(ellipse 65% 85% at 50% 0%, rgba(212, 160, 23, 0.16), transparent 72%);
-  animation: hold-lamp 16s ease-in-out infinite;
+  background: radial-gradient(ellipse 55% 90% at 50% 0%, rgba(212, 160, 23, 0.34), rgba(212, 160, 23, 0.08) 42%, transparent 74%);
+  animation: hold-lamp 10s ease-in-out infinite;
 }
 
 .hold-dust {
   position: fixed;
-  inset: 0;
-  z-index: 0;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  z-index: 1;
   pointer-events: none;
-  background:
-    radial-gradient(1px 1px at 12% 22%, rgba(212, 160, 23, 0.45), transparent),
-    radial-gradient(1.5px 1.5px at 28% 68%, rgba(236, 230, 212, 0.18), transparent),
-    radial-gradient(1px 1px at 41% 14%, rgba(212, 160, 23, 0.28), transparent),
-    radial-gradient(1px 1px at 63% 41%, rgba(236, 230, 212, 0.16), transparent),
-    radial-gradient(1.5px 1.5px at 77% 19%, rgba(212, 160, 23, 0.32), transparent),
-    radial-gradient(1px 1px at 84% 73%, rgba(236, 230, 212, 0.2), transparent),
-    radial-gradient(1px 1px at 9% 81%, rgba(212, 160, 23, 0.22), transparent),
-    radial-gradient(1px 1px at 52% 88%, rgba(212, 160, 23, 0.18), transparent);
-  animation: hold-dust 42s linear infinite;
+  border-radius: 50%;
+  background: #e8c44a;
+  box-shadow:
+    11vw 10vh 0 0 #e8c44a,
+    18vw 28vh 0 1px rgba(232, 196, 74, 0.55),
+    24vw 16vh 0 0 rgba(236, 230, 212, 0.7),
+    72vw 12vh 0 0 #e8c44a,
+    81vw 24vh 0 1px rgba(232, 196, 74, 0.5),
+    88vw 18vh 0 0 rgba(236, 230, 212, 0.65),
+    8vw 62vh 0 0 rgba(232, 196, 74, 0.45),
+    91vw 58vh 0 0 rgba(236, 230, 212, 0.5),
+    14vw 74vh 0 1px rgba(232, 196, 74, 0.4),
+    78vw 78vh 0 0 #e8c44a;
+  animation: hold-dust 22s linear infinite;
 }
 
 @keyframes hold-lamp {
-  0%, 100% { opacity: 0.45; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.07); }
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
 }
 
 @keyframes hold-dust {
-  0% { transform: translate3d(0, 10px, 0); opacity: 0; }
-  14% { opacity: 1; }
-  86% { opacity: 1; }
-  100% { transform: translate3d(-22px, -64px, 0); opacity: 0; }
+  0% { transform: translate3d(0, 16px, 0); opacity: 0; }
+  12% { opacity: 0.85; }
+  80% { opacity: 0.85; }
+  100% { transform: translate3d(-18px, -90px, 0); opacity: 0; }
 }
 
 .wrap {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: min(36rem, calc(100% - 2rem));
   margin: 0 auto;
   padding: 2.25rem 0 3rem;

@@ -354,7 +354,7 @@ func TestUIHeadersAndShell(t *testing.T) {
 	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("password manager")) {
 		t.Fatalf("home response: %d %s", rr.Code, rr.Body.String())
 	}
-	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=10")) {
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=11")) {
 		t.Fatal("UI shell does not load the cache-busted skin")
 	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte(`class="ver"`)) || !bytes.Contains(rr.Body.Bytes(), []byte("vdev")) {
