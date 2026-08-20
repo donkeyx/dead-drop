@@ -215,15 +215,17 @@ const uiShell = `<!doctype html>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
   <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
-  <link rel="stylesheet" href="/static/skin.css?v=7">
+  <link rel="stylesheet" href="/static/skin.css?v=11">
 </head>
 <body>
+  <div class="hold-lamp" aria-hidden="true"></div>
+  <div class="hold-dust" aria-hidden="true"></div>
   <div class="wrap">
     <header class="brand">
       <img src="/static/mark.jpg?v=1" width="88" height="88" alt="">
       <div>
         <h1>dead-drop</h1>
-        <p class="tag">Client-side encrypted. The server only ever sees ciphertext.</p>
+        <p class="tag">When a password manager won't cut it. Share a secret, then forget it.</p>
         <span class="org">donkeyx</span>
       </div>
     </header>
@@ -234,7 +236,7 @@ const uiShell = `<!doctype html>
           <label for="secret">Secret or small file</label>
           <div class="input-with-action secret-input">
             <textarea id="secret" class="privacy-mode" name="secret" autocomplete="off" maxlength="16777216" placeholder="Type a secret message..."></textarea>
-            <button class="visibility-toggle" type="button" data-toggle-visibility="secret" aria-label="Show secret" title="Show secret">◉</button>
+            <button class="visibility-toggle" type="button" data-toggle-visibility="secret" aria-label="Show secret" title="Show secret"></button>
           </div>
           <div class="file-pick">
             <label for="file">Or attach a small file</label>
@@ -244,11 +246,11 @@ const uiShell = `<!doctype html>
           <label for="passphrase">Optional passphrase</label>
           <div class="input-with-action">
             <input id="passphrase" name="passphrase" type="password" autocomplete="off">
-            <button class="visibility-toggle" type="button" data-toggle-visibility="passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
+            <button class="visibility-toggle" type="button" data-toggle-visibility="passphrase" aria-label="Show passphrase" title="Show passphrase"></button>
           </div>
           <div class="keep-row">
-            <label><input id="burn" type="checkbox" checked> Burn after first download</label>
-            <label class="ttl-label" for="ttl">Delete unused after
+            <label class="keep-opt" for="burn"><input id="burn" type="checkbox" checked> Burn after first download</label>
+            <label class="keep-opt" for="ttl">Delete unused after
               <select id="ttl">
                 <option value="1h">1 hour</option>
                 <option value="24h" selected>24 hours</option>
@@ -268,18 +270,18 @@ const uiShell = `<!doctype html>
         <label for="reveal-passphrase">Passphrase, if required</label>
         <div class="input-with-action">
           <input id="reveal-passphrase" type="password" autocomplete="off">
-          <button class="visibility-toggle" type="button" data-toggle-visibility="reveal-passphrase" aria-label="Show passphrase" title="Show passphrase">◉</button>
+          <button class="visibility-toggle" type="button" data-toggle-visibility="reveal-passphrase" aria-label="Show passphrase" title="Show passphrase"></button>
         </div>
         <button id="open-drop" type="button">Open encrypted drop</button>
         <output id="reveal-result" aria-live="polite"></output>
       </section>
     </main>
-    <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read. <a href="/about">How it works</a><span class="ver"> · v{{.Version}}</span></p>
-    <p class="foot stats" id="drop-stats" hidden></p>
+    <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read. <a href="/about">How it works</a></p>
+    <p class="foot meta"><span id="drop-stats" hidden></span><span class="ver">v{{.Version}}</span></p>
   </div>
   <script src="/static/wasm_exec.js"></script>
   <script src="/static/deaddrop.js"></script>
-  <script src="/static/ui.js?v=6"></script>
+  <script src="/static/ui.js?v=7"></script>
 </body>
 </html>`
 
@@ -290,9 +292,11 @@ const aboutPage = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How dead-drop works</title>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
-  <link rel="stylesheet" href="/static/skin.css?v=7">
+  <link rel="stylesheet" href="/static/skin.css?v=11">
 </head>
 <body>
+  <div class="hold-lamp" aria-hidden="true"></div>
+  <div class="hold-dust" aria-hidden="true"></div>
   <div class="wrap info-page">
     <header class="brand">
       <img src="/static/mark.jpg?v=1" width="88" height="88" alt="">
