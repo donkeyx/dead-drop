@@ -4,7 +4,7 @@ test:
 	go test ./...
 
 build:
-	go build -o bin/dead-drop ./cmd/dead-drop
+	go build -ldflags="-X github.com/donkeyx/dead-drop/internal/version.Version=$$(git describe --tags --always --dirty 2>/dev/null | sed 's/^v//')" -o bin/dead-drop ./cmd/dead-drop
 
 tidy:
 	go mod tidy
