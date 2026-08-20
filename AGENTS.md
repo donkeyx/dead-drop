@@ -33,5 +33,5 @@
 ## Current Scope
 
 - PR1–PR7 are complete: SEAL library, offline CLI, FS/SQLite/Postgres stores, HTTP API, network put/get, WASM crypto/vector harness, and the browser create/reveal/`/about` UI.
-- CI (PR + master) is tests and helm lint only. A `v*` tag on master publishes image + chart, then deploys; **Run workflow** on Release redeploys that tag. Chart is 0.1.3. No image publish from master. If HTMX is added later for non-sensitive chrome, it must never submit plaintext, fragment keys, or passphrases.
+- CI (PR + master) is tests and helm lint only. A `v*` tag on master publishes image + chart, then deploys; **Run workflow** on Release redeploys that tag. Chart is 0.1.4. No image publish from master. If HTMX is added later for non-sensitive chrome, it must never submit plaintext, fragment keys, or passphrases.
 - The design and README are the source of product/security constraints; preserve their wording around “client-side encrypted” and avoid unqualified “zero-knowledge” claims.
