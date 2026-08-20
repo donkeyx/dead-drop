@@ -34,6 +34,22 @@ spec:
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               args: ["expire"]
               env:
+                {{- if .Values.grafana.existingSecret }}
+                - name: OTEL_SERVICE_NAME
+                  value: dead-drop
+                - name: OTEL_EXPORTER_OTLP_PROTOCOL
+                  value: http/protobuf
+                - name: OTEL_EXPORTER_OTLP_ENDPOINT
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.grafana.existingSecret }}
+                      key: {{ .Values.grafana.endpointKey }}
+                - name: OTEL_EXPORTER_OTLP_HEADERS
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.grafana.existingSecret }}
+                      key: {{ .Values.grafana.headersKey }}
+                {{- end }}
                 - name: DEADDROP_STORE
                   value: {{ .Values.env.store | quote }}
                 - name: DEADDROP_DATABASE_URL

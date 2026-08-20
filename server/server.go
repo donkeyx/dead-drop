@@ -68,6 +68,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 	mux.HandleFunc("GET /startupz", s.handleStartupz)
 	mux.HandleFunc("GET /readyz", s.handleReadyz)
+	mux.HandleFunc("GET /api/v1/stats", s.handleStats)
 	mux.HandleFunc("POST /api/v1/secrets", s.handleCreate)
 	mux.HandleFunc("GET /api/v1/secrets/{id}", s.handleGet)
 	h := s.middleware(mux)
@@ -212,7 +213,7 @@ const uiShell = `<!doctype html>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
   <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
-  <link rel="stylesheet" href="/static/skin.css?v=5">
+  <link rel="stylesheet" href="/static/skin.css?v=6">
 </head>
 <body>
   <div class="wrap">
@@ -272,10 +273,11 @@ const uiShell = `<!doctype html>
       </section>
     </main>
     <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read. <a href="/about">How it works</a></p>
+    <p class="foot stats" id="drop-stats" hidden></p>
   </div>
   <script src="/static/wasm_exec.js"></script>
   <script src="/static/deaddrop.js"></script>
-  <script src="/static/ui.js?v=4"></script>
+  <script src="/static/ui.js?v=5"></script>
 </body>
 </html>`
 
@@ -286,7 +288,7 @@ const aboutPage = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How dead-drop works</title>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
-  <link rel="stylesheet" href="/static/skin.css?v=5">
+  <link rel="stylesheet" href="/static/skin.css?v=6">
 </head>
 <body>
   <div class="wrap info-page">
@@ -466,6 +468,7 @@ func (s *Server) handleCreate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		meta.ID = id
+		meta.HasPassphrase = blob.HasPassphrase(blobBytes)
 		err = s.st.Create(r.Context(), meta, blobBytes)
 		if err == nil {
 			break
@@ -484,6 +487,9 @@ func (s *Server) handleCreate(w http.ResponseWriter, r *http.Request) {
 
 	s.log.Info("secret created", "id", truncateID(id, s.cfg.LogIDsFull), "size", len(blobBytes), "burn", burn)
 	observe.Created(r.Context())
+	if meta.HasPassphrase {
+		observe.Passphrase(r.Context())
+	}
 	writeJSON(w, http.StatusCreated, createResp{
 		ID:            id,
 		ExpiresAt:     meta.ExpiresAt,
@@ -491,6 +497,16 @@ func (s *Server) handleCreate(w http.ResponseWriter, r *http.Request) {
 		Size:          meta.Size,
 		Path:          "/s/" + id,
 	})
+}
+
+func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
+	c, err := s.st.Stats(r.Context())
+	if err != nil {
+		s.log.Error("stats failed", "err", err)
+		writeErr(w, http.StatusServiceUnavailable, "storage_full", "storage error")
+		return
+	}
+	writeJSON(w, http.StatusOK, c)
 }
 
 func (s *Server) handleGet(w http.ResponseWriter, r *http.Request) {

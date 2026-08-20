@@ -39,11 +39,13 @@ var (
 	metricsH  http.Handler
 	tracing   bool
 
-	secretsCreated metric.Int64Counter
-	secretsFetched metric.Int64Counter
-	secretsBurned  metric.Int64Counter
-	httpReqs       metric.Int64Counter
-	httpDur        metric.Float64Histogram
+	secretsCreated    metric.Int64Counter
+	secretsFetched    metric.Int64Counter
+	secretsBurned     metric.Int64Counter
+	secretsExpired    metric.Int64Counter
+	secretsPassphrase metric.Int64Counter
+	httpReqs          metric.Int64Counter
+	httpDur           metric.Float64Histogram
 )
 
 // Start installs the Prometheus /metrics gatherer and, when
@@ -126,6 +128,14 @@ func start(ctx context.Context) error {
 		metric.WithDescription("Burn-after-read Takes that consumed the drop")); err != nil {
 		return err
 	}
+	if secretsExpired, err = meter.Int64Counter("deaddrop.secrets.expired",
+		metric.WithDescription("TTL-expired drops deleted")); err != nil {
+		return err
+	}
+	if secretsPassphrase, err = meter.Int64Counter("deaddrop.secrets.passphrase",
+		metric.WithDescription("Creates with a passphrase")); err != nil {
+		return err
+	}
 	if httpReqs, err = meter.Int64Counter("deaddrop.http.requests",
 		metric.WithDescription("HTTP requests")); err != nil {
 		return err
@@ -179,6 +189,20 @@ func Burned(ctx context.Context) {
 	}
 }
 
+// Expired increments deaddrop_secrets_expired_total by n.
+func Expired(ctx context.Context, n int64) {
+	if n > 0 && secretsExpired != nil {
+		secretsExpired.Add(ctx, n)
+	}
+}
+
+// Passphrase increments deaddrop_secrets_passphrase_total.
+func Passphrase(ctx context.Context) {
+	if secretsPassphrase != nil {
+		secretsPassphrase.Add(ctx, 1)
+	}
+}
+
 // HTTP records request count and duration. Route labels are templates only.
 func HTTP(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -217,6 +241,8 @@ func Route(r *http.Request) string {
 		return "/startupz"
 	case path == "/favicon.ico":
 		return "/favicon.ico"
+	case path == "/api/v1/stats":
+		return "/api/v1/stats"
 	case path == "/api/v1/secrets" && r.Method == http.MethodPost:
 		return "/api/v1/secrets"
 	case strings.HasPrefix(path, "/api/v1/secrets/"):

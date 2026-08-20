@@ -41,7 +41,7 @@ func TestPostgresTakeBurnRace(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer s.Close()
-	if _, err := s.db.Exec(`TRUNCATE deaddrop.secrets`); err != nil {
+	if _, err := s.db.Exec(`TRUNCATE deaddrop.secrets, deaddrop.stats`); err != nil {
 		t.Fatal(err)
 	}
 	runTakeBurnRace(t, s)
@@ -197,6 +197,61 @@ func TestFSQuarantineStartupReap(t *testing.T) {
 	defer s.Close()
 	if _, err := os.Stat(orphan); !os.IsNotExist(err) {
 		t.Fatal("quarantine orphan should be reaped on startup")
+	}
+}
+
+func TestCountersSQLite(t *testing.T) {
+	dir := t.TempDir()
+	s, err := OpenSQLite(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	runCounters(t, s)
+}
+
+func TestCountersFS(t *testing.T) {
+	dir := t.TempDir()
+	s, err := OpenFS(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	runCounters(t, s)
+}
+
+func runCounters(t *testing.T, s Store) {
+	t.Helper()
+	ctx := context.Background()
+	now := time.Now().UTC()
+	mustCreate := func(id string, burn, pass bool, exp time.Time) {
+		t.Helper()
+		if err := s.Create(ctx, Meta{
+			ID: id, CreatedAt: now, ExpiresAt: exp,
+			BurnAfterRead: burn, HasPassphrase: pass, FormatVersion: 1,
+		}, []byte("SEAL-fake")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	mustCreate("a", true, true, now.Add(time.Hour))
+	mustCreate("b", false, false, now.Add(time.Hour))
+	mustCreate("c", false, false, now.Add(-time.Minute))
+	if _, err := s.Take(ctx, "a"); err != nil {
+		t.Fatal(err)
+	}
+	n, err := s.DeleteExpired(ctx, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n != 1 {
+		t.Fatalf("expired %d", n)
+	}
+	c, err := s.Stats(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Created != 3 || c.Burned != 1 || c.Expired != 1 || c.Passphrase != 1 {
+		t.Fatalf("got %+v", c)
 	}
 }
 

@@ -15,6 +15,9 @@ type Meta struct {
 	BurnAfterRead bool
 	Size          int64
 	FormatVersion uint8
+	// HasPassphrase is not stored on the secret row. Stores bump the
+	// passphrase counter when it is true on Create.
+	HasPassphrase bool
 }
 
 // Record is a secret as stored: meta + opaque blob.
@@ -48,6 +51,7 @@ type Store interface {
 	Delete(ctx context.Context, id string) error
 	DeleteExpired(ctx context.Context, now time.Time) (int, error)
 	Count(ctx context.Context) (active int64, err error)
+	Stats(ctx context.Context) (Counters, error)
 
 	// Close releases resources and the process lock.
 	Close() error

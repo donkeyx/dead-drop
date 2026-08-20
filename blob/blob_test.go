@@ -79,6 +79,28 @@ func TestGoldenNoPass(t *testing.T) {
 	}
 }
 
+func TestHasPassphrase(t *testing.T) {
+	nopass := loadGolden(t, "v1_nopass.json")
+	pass := loadGolden(t, "v1_passphrase.json")
+	nopassBlob, err := DecodeKeyB64URL(nopass.BlobB64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	passBlob, err := DecodeKeyB64URL(pass.BlobB64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if HasPassphrase(nopassBlob) {
+		t.Fatal("nopass flagged")
+	}
+	if !HasPassphrase(passBlob) {
+		t.Fatal("passphrase package not flagged")
+	}
+	if HasPassphrase(nil) || HasPassphrase([]byte("SEAL")) {
+		t.Fatal("short package flagged")
+	}
+}
+
 func TestGoldenPassphrase(t *testing.T) {
 	g := loadGolden(t, "v1_passphrase.json")
 	mk, err := DecodeKeyB64URL(g.MasterKeyB64)

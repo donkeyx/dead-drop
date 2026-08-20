@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/donkeyx/dead-drop/internal/config"
+	"github.com/donkeyx/dead-drop/internal/observe"
 	"github.com/donkeyx/dead-drop/store"
 )
 
@@ -59,6 +60,11 @@ func cmdExpire(args []string) int {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "expire: %v\n", err)
 		return exitUsage
+	}
+	if n > 0 {
+		_ = observe.Start(ctx)
+		observe.Expired(ctx, int64(n))
+		observe.Shutdown(ctx)
 	}
 	log.Info("expired rows removed", "deleted", n, "store", cfg.Store)
 	return exitOK

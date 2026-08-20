@@ -85,7 +85,12 @@ func (s *FS) Create(ctx context.Context, meta Meta, blob []byte) error {
 		_ = os.Remove(blobPath)
 		return err
 	}
-	return nil
+	c := s.readCounters()
+	c.Created++
+	if meta.HasPassphrase {
+		c.Passphrase++
+	}
+	return s.writeCounters(c)
 }
 
 func (s *FS) Take(ctx context.Context, id string) (Record, error) {
@@ -114,6 +119,9 @@ func (s *FS) Take(ctx context.Context, id string) (Record, error) {
 	if !meta.ExpiresAt.IsZero() && !now.Before(meta.ExpiresAt) {
 		_ = os.Remove(blobPath)
 		_ = os.Remove(metaPath)
+		c := s.readCounters()
+		c.Expired++
+		_ = s.writeCounters(c)
 		return Record{}, ErrNotFound
 	}
 
@@ -141,6 +149,9 @@ func (s *FS) Take(ctx context.Context, id string) (Record, error) {
 			return Record{}, err
 		}
 		meta.Size = int64(len(blob))
+		c := s.readCounters()
+		c.Burned++
+		_ = s.writeCounters(c)
 		return Record{Meta: meta, Blob: blob}, nil
 	}
 
@@ -224,7 +235,23 @@ func (s *FS) DeleteExpired(ctx context.Context, now time.Time) (int, error) {
 		}
 		return nil
 	})
+	if n > 0 {
+		c := s.readCounters()
+		c.Expired += int64(n)
+		if werr := s.writeCounters(c); werr != nil && err == nil {
+			err = werr
+		}
+	}
 	return n, err
+}
+
+func (s *FS) Stats(ctx context.Context) (Counters, error) {
+	if err := ctx.Err(); err != nil {
+		return Counters{}, err
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.readCounters(), nil
 }
 
 func (s *FS) Count(ctx context.Context) (int64, error) {
@@ -313,6 +340,28 @@ type metaJSON struct {
 	BurnAfterRead bool      `json:"burn_after_read"`
 	Size          int64     `json:"size"`
 	FormatVersion uint8     `json:"format_version"`
+}
+
+func (s *FS) statsPath() string { return filepath.Join(s.root, "stats.json") }
+
+func (s *FS) readCounters() Counters {
+	b, err := os.ReadFile(s.statsPath())
+	if err != nil {
+		return Counters{}
+	}
+	var c Counters
+	if json.Unmarshal(b, &c) != nil {
+		return Counters{}
+	}
+	return c
+}
+
+func (s *FS) writeCounters(c Counters) error {
+	b, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+	return writeFileAtomic(s.statsPath(), b, 0o600)
 }
 
 func metaJSONFrom(m Meta) metaJSON {

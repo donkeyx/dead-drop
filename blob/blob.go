@@ -192,6 +192,18 @@ func seal(plaintext []byte, masterKey []byte, opt SealOptions, fixedSalt, fixedN
 	return out, nil
 }
 
+// HasPassphrase reports the HAS_PASSPHRASE clear-header flag.
+// Invalid or short packages return false. Does not decrypt.
+func HasPassphrase(packageBytes []byte) bool {
+	if len(packageBytes) < 8 {
+		return false
+	}
+	if string(packageBytes[0:4]) != Magic || packageBytes[4] != VersionV1 {
+		return false
+	}
+	return packageBytes[5]&FlagHasPass != 0
+}
+
 // Open decrypts a SEAL v1 package with masterKey and optional passphrase.
 func Open(packageBytes []byte, masterKey []byte, passphrase []byte) (OpenResult, error) {
 	var zero OpenResult
