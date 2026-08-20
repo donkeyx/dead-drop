@@ -120,7 +120,41 @@ textarea::placeholder { color: #716d5d; }
 }
 
 .file-pick label { margin-top: 0; }
-.file-pick input[type="file"] { padding: 0.55rem; }
+.file-pick input[type="file"] {
+  padding: 0.35rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+.file-pick[data-name] input[type="file"] {
+  color: transparent;
+}
+.file-pick input[type="file"]::file-selector-button {
+  appearance: none;
+  margin-right: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--brass-dim);
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--brass);
+  font: inherit;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.file-pick input[type="file"]::file-selector-button:hover {
+  filter: brightness(1.08);
+}
+.file-pick[data-name]::after {
+  content: attr(data-name);
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
 
 textarea {
   min-height: 9rem;
@@ -128,7 +162,7 @@ textarea {
   font: 0.98rem/1.45 ui-monospace, "Cascadia Code", monospace;
 }
 
-textarea:focus, input:focus, button:focus-visible {
+textarea:focus, input:focus, select:focus, button:focus-visible {
   outline: 2px solid var(--brass);
   outline-offset: 1px;
 }

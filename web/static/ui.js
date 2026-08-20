@@ -115,11 +115,14 @@
         parts.push("Unused after " + when.toISOString().slice(0, 16).replace("T", " ") + " UTC.");
       }
       meta.textContent = parts.join(" ");
+      result.className = "success";
       result.append(label, row, meta);
       loadDropStats();
       byId("secret").value = "";
       byId("file").value = "";
       byId("passphrase").value = "";
+      const pick = byId("file")?.closest(".file-pick");
+      if (pick) delete pick.dataset.name;
     } catch (error) {
       setMessage(result, error.message);
     } finally {
@@ -271,6 +274,13 @@
 
   byId("create-form")?.addEventListener("submit", createDrop);
   byId("open-drop")?.addEventListener("click", revealDrop);
+  byId("file")?.addEventListener("change", () => {
+    const wrap = byId("file").closest(".file-pick");
+    if (!wrap) return;
+    const chosen = byId("file").files[0];
+    if (chosen) wrap.dataset.name = chosen.name;
+    else delete wrap.dataset.name;
+  });
   document.querySelectorAll("[data-toggle-visibility]").forEach((toggle) => {
     toggle.addEventListener("click", () => {
       const input = byId(toggle.dataset.toggleVisibility);

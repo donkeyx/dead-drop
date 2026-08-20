@@ -279,7 +279,7 @@ const uiShell = `<!doctype html>
   </div>
   <script src="/static/wasm_exec.js"></script>
   <script src="/static/deaddrop.js"></script>
-  <script src="/static/ui.js?v=5"></script>
+  <script src="/static/ui.js?v=6"></script>
 </body>
 </html>`
 
