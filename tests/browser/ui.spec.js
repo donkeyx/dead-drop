@@ -29,6 +29,19 @@ test("creates and reveals a burn-after-read text drop", async ({ page, browser }
   await expect(secondRecipient.locator("#reveal-result")).toHaveText("Drop not found or already burned.");
 });
 
+test("crate lid peeks open and file chooser is an outline control", async ({ page }) => {
+  await page.goto("/");
+  const toggle = page.locator('[data-toggle-visibility="secret"]');
+  await expect(toggle.locator(".lid-group")).toBeVisible();
+  await expect(toggle).not.toHaveClass(/peek/);
+  await toggle.click();
+  await expect(toggle).toHaveClass(/peek/);
+  await expect(page.locator("#secret")).not.toHaveClass(/privacy-mode/);
+
+  await expect(page.locator("label.file-btn")).toHaveText("Choose file");
+  await expect(page.locator("#file")).toHaveClass(/visually-hidden/);
+});
+
 test("creates a file drop and downloads the decrypted file", async ({ page, browser }) => {
   await page.goto("/");
   await page.locator("#file").setInputFiles({

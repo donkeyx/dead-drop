@@ -195,6 +195,7 @@ textarea, input[type="text"], input[type="password"], input[type="file"] {
 textarea::placeholder { color: #716d5d; }
 
 .file-pick {
+  position: relative;
   margin-top: 0.85rem;
   padding: 0.85rem;
   border: 1px dashed var(--line);
@@ -202,33 +203,51 @@ textarea::placeholder { color: #716d5d; }
   background: rgba(0, 0, 0, 0.12);
 }
 
-.file-pick label { margin-top: 0; }
-.file-pick input[type="file"] {
-  padding: 0.35rem 0;
-  border: 0;
-  background: transparent;
+.file-caption {
+  display: block;
+  margin: 0 0 0.45rem;
   color: var(--muted);
-  font-size: 0.88rem;
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
-.file-pick[data-name] input[type="file"] {
-  color: transparent;
-}
-.file-pick input[type="file"]::file-selector-button {
-  appearance: none;
-  margin-right: 0.75rem;
+
+.file-btn {
+  display: inline-block;
+  margin: 0;
   padding: 0.4rem 0.75rem;
   border: 1px solid var(--brass-dim);
   border-radius: 0.35rem;
-  background: transparent;
+  background: var(--bg-2);
   color: var(--brass);
   font: inherit;
   font-weight: 650;
   letter-spacing: 0.04em;
+  text-transform: none;
   cursor: pointer;
 }
-.file-pick input[type="file"]::file-selector-button:hover {
+
+.file-btn:hover {
   filter: brightness(1.08);
 }
+
+.file-pick:has(#file:focus-visible) .file-btn {
+  outline: 2px solid var(--brass);
+  outline-offset: 1px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .file-pick[data-name]::after {
   content: attr(data-name);
   display: block;
@@ -268,6 +287,7 @@ textarea:focus, input:focus, select:focus, button:focus-visible {
   place-items: center;
   margin-top: 0;
   padding: 0.35rem;
+  overflow: visible;
   background: var(--bg-2);
   color: var(--brass);
   box-shadow: inset 0 0 0 1px var(--brass-dim);
@@ -288,19 +308,35 @@ textarea:focus, input:focus, select:focus, button:focus-visible {
   overflow: visible;
 }
 
-.hatch-icon .slat {
-  fill: currentColor;
-  transform-box: fill-box;
-  transform-origin: 50% 50%;
-  transition: transform 0.22s ease, opacity 0.22s ease;
+.hatch-icon .crate-body {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
 }
 
-.visibility-toggle.peek .s1 { transform: translateY(-2.4px) rotate(-13deg); }
-.visibility-toggle.peek .s2 { transform: scaleX(0.82); opacity: 0.28; }
-.visibility-toggle.peek .s3 { transform: translateY(2.4px) rotate(13deg); }
+.hatch-icon .crate-well {
+  fill: currentColor;
+  opacity: 0.16;
+  transition: opacity 0.22s ease;
+}
+
+.hatch-icon .lid,
+.hatch-icon .handle {
+  fill: currentColor;
+}
+
+.hatch-icon .lid-group {
+  transform-box: fill-box;
+  transform-origin: 0% 100%;
+  transition: transform 0.22s ease;
+}
+
+.visibility-toggle.peek .lid-group { transform: rotate(-46deg); }
+.visibility-toggle.peek .crate-well { opacity: 0.42; }
 
 @media (prefers-reduced-motion: reduce) {
-  .hatch-icon .slat { transition: none; }
+  .hatch-icon .lid-group,
+  .hatch-icon .crate-well { transition: none; }
   .hold-lamp,
   .hold-dust,
   .primary-action::after { animation: none; }
@@ -338,14 +374,19 @@ input[type="checkbox"] {
 }
 
 .keep-opt select {
+  appearance: none;
   font: inherit;
   color: inherit;
   width: auto;
   margin: 0;
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 1.55rem 0.25rem 0.5rem;
   border: 1px solid var(--line);
   border-radius: 0.35rem;
-  background: var(--bg-2);
+  background-color: var(--bg-2);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23d4a017' d='M1 1.5 6 6.5 11 1.5 12 2.5 6 8 0 2.5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.45rem center;
+  background-size: 0.7rem;
 }
 
 .keep-meta { margin: 0.45rem 0 0; }

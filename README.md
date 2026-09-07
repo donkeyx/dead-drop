@@ -41,7 +41,7 @@ Same donkey stable as [tcp-wait](https://github.com/donkeyx/tcp-wait) / [cluster
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/donkeyx/dead-drop/master/install.sh | sh
-# PREFIX=~/.local/bin VERSION=v0.1.8 sh install.sh   # pin / custom path
+# PREFIX=~/.local/bin VERSION=v0.1.10 sh install.sh   # pin / custom path
 ```
 
 ```bash
@@ -105,7 +105,7 @@ kubectl create secret generic dead-drop-db \
 
 cp deploy/helm/dead-drop/values.example.yaml deploy/helm/dead-drop/values.local.yaml
 helm upgrade --install dead-drop oci://ghcr.io/donkeyx/charts/dead-drop \
-  --version 0.1.9 \
+  --version 0.1.10 \
   -n dead-drop --create-namespace \
   -f deploy/helm/dead-drop/values.local.yaml
 ```

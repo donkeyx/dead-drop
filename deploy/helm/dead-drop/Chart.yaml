@@ -2,8 +2,8 @@ apiVersion: v2
 name: dead-drop
 description: Client-side encrypted secret sharing service
 type: application
-version: 0.1.9
-appVersion: "0.1.9"
+version: 0.1.10
+appVersion: "0.1.10"
 keywords:
   - encryption
   - secrets

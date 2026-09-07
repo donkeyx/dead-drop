@@ -215,7 +215,7 @@ const uiShell = `<!doctype html>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
   <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
-  <link rel="stylesheet" href="/static/skin.css?v=12">
+  <link rel="stylesheet" href="/static/skin.css?v=13">
 </head>
 <body>
   <div class="hold-lamp" aria-hidden="true"></div>
@@ -225,7 +225,7 @@ const uiShell = `<!doctype html>
       <img src="/static/mark.jpg?v=1" width="88" height="88" alt="">
       <div>
         <h1>dead-drop</h1>
-        <p class="tag">When a password manager won't cut it. Share a secret, then forget it.</p>
+        <p class="tag">One-off shares a password manager can't do. A secret or a small file, then it's gone.</p>
         <span class="org">donkeyx</span>
       </div>
     </header>
@@ -233,14 +233,15 @@ const uiShell = `<!doctype html>
       <section class="panel" id="create-panel">
         <h2>Leave a drop</h2>
         <form id="create-form">
-          <label for="secret">Secret or small file</label>
+          <label for="secret">Secret</label>
           <div class="input-with-action secret-input">
             <textarea id="secret" class="privacy-mode" name="secret" autocomplete="off" maxlength="16777216" placeholder="Type a secret message..."></textarea>
             <button class="visibility-toggle" type="button" data-toggle-visibility="secret" aria-label="Show secret" title="Show secret"></button>
           </div>
           <div class="file-pick">
-            <label for="file">Or attach a small file</label>
-            <input id="file" type="file" accept="*/*">
+            <span class="file-caption" id="file-caption">Or a small file</span>
+            <input id="file" class="visually-hidden" type="file" accept="*/*" aria-labelledby="file-caption">
+            <label class="file-btn" for="file">Choose file</label>
           </div>
           <p class="muted"><span class="lock-mark" aria-hidden="true">◆</span> Encrypted in this browser. Never uploaded as plaintext. Maximum 16 MiB.</p>
           <label for="passphrase">Optional passphrase</label>
@@ -281,7 +282,7 @@ const uiShell = `<!doctype html>
   </div>
   <script src="/static/wasm_exec.js"></script>
   <script src="/static/deaddrop.js"></script>
-  <script src="/static/ui.js?v=7"></script>
+  <script src="/static/ui.js?v=8"></script>
 </body>
 </html>`
 
@@ -292,7 +293,7 @@ const aboutPage = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How dead-drop works</title>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
-  <link rel="stylesheet" href="/static/skin.css?v=12">
+  <link rel="stylesheet" href="/static/skin.css?v=13">
 </head>
 <body>
   <div class="hold-lamp" aria-hidden="true"></div>

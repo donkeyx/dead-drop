@@ -20,10 +20,12 @@
 
   const hatchMarkup =
     '<svg class="hatch-icon" viewBox="0 0 32 32" aria-hidden="true">' +
-    '<rect class="slat s1" x="5" y="7" width="22" height="5" rx="1.3"/>' +
-    '<rect class="slat s2" x="5" y="13.5" width="22" height="5" rx="1.3"/>' +
-    '<rect class="slat s3" x="5" y="20" width="22" height="5" rx="1.3"/>' +
-    "</svg>";
+    '<rect class="crate-body" x="6" y="13" width="20" height="14" rx="2"/>' +
+    '<rect class="crate-well" x="9" y="17" width="14" height="7" rx="1"/>' +
+    '<g class="lid-group">' +
+    '<rect class="lid" x="5" y="9" width="22" height="6" rx="1.4"/>' +
+    '<rect class="handle" x="13.5" y="6.5" width="5" height="2.8" rx="1"/>' +
+    "</g></svg>";
 
   function mountHatch(button) {
     if (!button || button.querySelector(".hatch-icon")) return;
