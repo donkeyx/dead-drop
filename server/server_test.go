@@ -351,11 +351,23 @@ func TestUIHeadersAndShell(t *testing.T) {
 	srv, _ := testServer(t)
 	rr := httptest.NewRecorder()
 	srv.Handler().ServeHTTP(rr, httptest.NewRequest(http.MethodGet, "/", nil))
-	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("password manager")) {
+	if rr.Code != http.StatusOK || !bytes.Contains(rr.Body.Bytes(), []byte("One-off shares a password manager can't do")) {
 		t.Fatalf("home response: %d %s", rr.Code, rr.Body.String())
 	}
-	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=12")) {
+	if !bytes.Contains(rr.Body.Bytes(), []byte(`<label for="secret">Secret</label>`)) {
+		t.Fatal("secret field should be labeled Secret, not Secret or small file")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte(`id="file-caption">Or a small file</span>`)) {
+		t.Fatal("file field should be labeled Or a small file")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte(`<label class="file-btn" for="file">Choose file</label>`)) {
+		t.Fatal("file chooser should be an outline label, not native file chrome")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=13")) {
 		t.Fatal("UI shell does not load the cache-busted skin")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/ui.js?v=8")) {
+		t.Fatal("UI shell does not load the cache-busted ui script")
 	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte(`class="ver"`)) || !bytes.Contains(rr.Body.Bytes(), []byte("vdev")) {
 		t.Fatal("UI shell missing version")

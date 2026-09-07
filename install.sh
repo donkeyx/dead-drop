@@ -2,7 +2,7 @@
 # Install the latest dead-drop CLI from GitHub Releases.
 #   curl -fsSL https://raw.githubusercontent.com/donkeyx/dead-drop/master/install.sh | sh
 #
-# Override with PREFIX=/usr/local/bin or VERSION=v0.1.9
+# Override with PREFIX=/usr/local/bin or VERSION=v0.1.10
 # SKIP_ATTEST=1 skips GitHub provenance if gh is installed.
 set -eu
 
