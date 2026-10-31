@@ -3,17 +3,31 @@ const { test, expect } = require("@playwright/test");
 
 test("creates and reveals a burn-after-read text drop", async ({ page, browser }) => {
   const apiRequests = [];
+  const postBodies = [];
+  let statsHits = 0;
   page.on("request", (request) => {
     if (request.url().includes("/api/v1/secrets/")) apiRequests.push(request.url());
+    if (request.url().includes("/api/v1/stats")) statsHits += 1;
+    if (request.method() === "POST" && request.url().includes("/api/v1/secrets")) {
+      postBodies.push(request.postData() || "");
+    }
   });
 
   await page.goto("/");
+  await expect.poll(() => page.evaluate(() => window.htmx && window.htmx.config.transitions)).toBe(true);
+  await expect.poll(() => statsHits).toBeGreaterThan(0);
+  const statsBeforeCreate = statsHits;
   await page.locator("#secret").fill("browser secret");
   await page.getByRole("button", { name: "Create encrypted link" }).click();
 
   const link = page.locator("input[aria-label='Share link']");
   await expect(link).toHaveValue(/#.+/);
   await expect(page.locator(".keep-meta")).toContainText(/Unused after/);
+  expect(postBodies.length).toBe(1);
+  expect(postBodies[0].startsWith("SEAL")).toBeTruthy();
+  expect(postBodies[0].includes("browser secret")).toBeFalsy();
+  await expect.poll(() => statsHits).toBeGreaterThan(statsBeforeCreate);
+  await expect(page.locator("#stats-error")).toBeEmpty();
   const shareURL = await link.inputValue();
 
   const recipient = await browser.newPage();

@@ -215,9 +215,10 @@ const uiShell = `<!doctype html>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
   <link rel="icon" type="image/png" href="/static/favicon.png?v=1" sizes="32x32">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png?v=1">
-  <link rel="stylesheet" href="/static/skin.css?v=13">
+  <link rel="stylesheet" href="/static/skin.css?v=14">
+  <meta name="htmx-config" content='{"transitions":true}'>
 </head>
-<body>
+<body hx-boost="false">
   <div class="hold-lamp" aria-hidden="true"></div>
   <div class="hold-dust" aria-hidden="true"></div>
   <div class="wrap">
@@ -232,10 +233,10 @@ const uiShell = `<!doctype html>
     <main>
       <section class="panel" id="create-panel">
         <h2>Leave a drop</h2>
-        <form id="create-form">
+        <form id="create-form" hx-boost="false">
           <label for="secret">Secret</label>
           <div class="input-with-action secret-input">
-            <textarea id="secret" class="privacy-mode" name="secret" autocomplete="off" maxlength="16777216" placeholder="Type a secret message..."></textarea>
+            <textarea id="secret" class="privacy-mode" autocomplete="off" maxlength="16777216" placeholder="Type a secret message..."></textarea>
             <button class="visibility-toggle" type="button" data-toggle-visibility="secret" aria-label="Show secret" title="Show secret"></button>
           </div>
           <div class="file-pick">
@@ -246,7 +247,7 @@ const uiShell = `<!doctype html>
           <p class="muted"><span class="lock-mark" aria-hidden="true">◆</span> Encrypted in this browser. Never uploaded as plaintext. Maximum 16 MiB.</p>
           <label for="passphrase">Optional passphrase</label>
           <div class="input-with-action">
-            <input id="passphrase" name="passphrase" type="password" autocomplete="off">
+            <input id="passphrase" type="password" autocomplete="off">
             <button class="visibility-toggle" type="button" data-toggle-visibility="passphrase" aria-label="Show passphrase" title="Show passphrase"></button>
           </div>
           <div class="keep-row">
@@ -265,7 +266,7 @@ const uiShell = `<!doctype html>
         </form>
         <output id="create-result" aria-live="polite"></output>
       </section>
-      <section class="panel" id="reveal-panel" hidden>
+      <section class="panel" id="reveal-panel" hidden hx-boost="false">
         <h2>Open drop</h2>
         <p class="warning">The first download consumes burn-after-read drops, even if decryption fails.</p>
         <label for="reveal-passphrase">Passphrase, if required</label>
@@ -278,11 +279,14 @@ const uiShell = `<!doctype html>
       </section>
     </main>
     <p class="foot">A <b>donkeyx</b> drop. Encrypt first. Leave nothing the operator can read. <a href="/about">How it works</a></p>
-    <p class="foot meta"><span id="drop-stats" hidden></span><span class="ver">v{{.Version}}</span></p>
+    <p class="foot meta"><span id="drop-stats" hx-action="/api/v1/stats" hx-method="get" hx-trigger="load, refresh-stats from:body" hx-target="#drop-stats" hx-swap="innerHTML" hx-pending="#stats-pending" hx-config="timeout:10s" hx-status:4xx="swap:textContent target:#stats-error" hx-status:5xx="swap:textContent target:#stats-error"><span id="stat-created">0</span> created · <span id="stat-burned">0</span> burned · <span id="stat-expired">0</span> expired</span><span class="ver">v{{.Version}}</span><span id="stats-error" class="error"></span></p>
+    <template id="stats-pending"><span class="muted">Counting drops…</span></template>
   </div>
   <script src="/static/wasm_exec.js"></script>
   <script src="/static/deaddrop.js"></script>
-  <script src="/static/ui.js?v=8"></script>
+  <script src="/static/htmx.min.js?v=1"></script>
+  <script src="/static/hx-pending.js?v=1"></script>
+  <script src="/static/ui.js?v=9"></script>
 </body>
 </html>`
 
@@ -293,9 +297,10 @@ const aboutPage = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>How dead-drop works</title>
   <link rel="icon" href="/static/favicon.ico?v=1" sizes="any">
-  <link rel="stylesheet" href="/static/skin.css?v=13">
+  <link rel="stylesheet" href="/static/skin.css?v=14">
+  <meta name="htmx-config" content='{"transitions":true}'>
 </head>
-<body>
+<body hx-boost="false">
   <div class="hold-lamp" aria-hidden="true"></div>
   <div class="hold-dust" aria-hidden="true"></div>
   <div class="wrap info-page">
@@ -326,9 +331,13 @@ dead-drop get -out secret.txt 'https://drop.donkeyx.dev/s/ID#KEY'</code></pre>
         <li>Client-side encryption is not a promise that this host is harmless. Verify the code or run your own.</li>
       </ul>
       <p class="warning">Do not use this for anything where you cannot accept a compromised browser, server, or deploy.</p>
-      <p class="foot"><a href="/">Back to dead-drop</a><span class="ver"> · v{{.Version}}</span></p>
+      <p class="foot"><a href="/">Back to dead-drop</a></p>
+      <p class="foot meta"><span id="drop-stats" hx-action="/api/v1/stats" hx-method="get" hx-trigger="load" hx-target="#drop-stats" hx-swap="innerHTML" hx-pending="#stats-pending" hx-config="timeout:10s" hx-status:4xx="swap:textContent target:#stats-error" hx-status:5xx="swap:textContent target:#stats-error"><span id="stat-created">0</span> created · <span id="stat-burned">0</span> burned · <span id="stat-expired">0</span> expired</span><span class="ver">v{{.Version}}</span><span id="stats-error" class="error"></span></p>
+      <template id="stats-pending"><span class="muted">Counting drops…</span></template>
     </main>
   </div>
+  <script src="/static/htmx.min.js?v=1"></script>
+  <script src="/static/hx-pending.js?v=1"></script>
 </body>
 </html>`
 
@@ -518,10 +527,52 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	c, err := s.st.Stats(r.Context())
 	if err != nil {
 		s.log.Error("stats failed", "err", err)
+		if r.Header.Get("HX-Request") == "true" {
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-store")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte("stats unavailable"))
+			return
+		}
 		writeErr(w, http.StatusServiceUnavailable, "storage_full", "storage error")
 		return
 	}
+	if r.Header.Get("HX-Request") == "true" {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-store")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(statsPartials(c)))
+		return
+	}
 	writeJSON(w, http.StatusOK, c)
+}
+
+func statsPartials(c store.Counters) string {
+	return `<hx-partial hx-target="#stat-created" hx-swap="textContent">` + formatCount(c.Created) + `</hx-partial>` +
+		`<hx-partial hx-target="#stat-burned" hx-swap="textContent">` + formatCount(c.Burned) + `</hx-partial>` +
+		`<hx-partial hx-target="#stat-expired" hx-swap="textContent">` + formatCount(c.Expired) + `</hx-partial>`
+}
+
+func formatCount(n int64) string {
+	neg := n < 0
+	if neg {
+		n = -n
+	}
+	s := strconv.FormatInt(n, 10)
+	var b strings.Builder
+	if neg {
+		b.WriteByte('-')
+	}
+	lead := len(s) % 3
+	if lead == 0 {
+		lead = 3
+	}
+	b.WriteString(s[:lead])
+	for i := lead; i < len(s); i += 3 {
+		b.WriteByte(',')
+		b.WriteString(s[i : i+3])
+	}
+	return b.String()
 }
 
 func (s *Server) handleGet(w http.ResponseWriter, r *http.Request) {

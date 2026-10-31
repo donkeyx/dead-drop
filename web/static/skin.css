@@ -459,7 +459,8 @@ output {
   overflow-wrap: anywhere;
 }
 
-output.error { color: var(--warn); }
+output.error, #stats-error { color: var(--warn); }
+.error:empty { display: none; }
 output.progress { color: var(--muted); }
 output.success {
   padding: 0.8rem;

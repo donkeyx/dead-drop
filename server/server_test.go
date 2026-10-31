@@ -363,11 +363,25 @@ func TestUIHeadersAndShell(t *testing.T) {
 	if !bytes.Contains(rr.Body.Bytes(), []byte(`<label class="file-btn" for="file">Choose file</label>`)) {
 		t.Fatal("file chooser should be an outline label, not native file chrome")
 	}
-	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=13")) {
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/skin.css?v=14")) {
 		t.Fatal("UI shell does not load the cache-busted skin")
 	}
-	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/ui.js?v=8")) {
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/ui.js?v=9")) {
 		t.Fatal("UI shell does not load the cache-busted ui script")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/htmx.min.js?v=1")) || !bytes.Contains(rr.Body.Bytes(), []byte("/static/hx-pending.js?v=1")) {
+		t.Fatal("UI shell does not load vendored htmx")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte(`<body hx-boost="false">`)) || !bytes.Contains(rr.Body.Bytes(), []byte(`id="reveal-panel" hidden hx-boost="false"`)) {
+		t.Fatal("boost must stay off on the shell and the reveal panel")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte(`name="htmx-config"`)) {
+		t.Fatal("UI shell missing htmx config")
+	}
+	for _, leaked := range []string{`name="secret"`, `name="passphrase"`} {
+		if bytes.Contains(rr.Body.Bytes(), []byte(leaked)) {
+			t.Fatalf("UI shell names a sensitive field: %s", leaked)
+		}
 	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte(`class="ver"`)) || !bytes.Contains(rr.Body.Bytes(), []byte("vdev")) {
 		t.Fatal("UI shell missing version")
@@ -463,6 +477,52 @@ func TestStatsAPI(t *testing.T) {
 	if got.Created != 1 || got.Burned != 1 || got.Passphrase != 1 || got.Expired != 0 {
 		t.Fatalf("got %+v", got)
 	}
+
+	hxReq := httptest.NewRequest(http.MethodGet, "/api/v1/stats", nil)
+	hxReq.Header.Set("HX-Request", "true")
+	rr = httptest.NewRecorder()
+	h.ServeHTTP(rr, hxReq)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("hx stats %d %s", rr.Code, rr.Body.String())
+	}
+	if ct := rr.Header().Get("Content-Type"); !strings.Contains(ct, "text/html") {
+		t.Fatalf("hx content-type %q", ct)
+	}
+	if rr.Header().Get("Cache-Control") != "no-store" {
+		t.Fatal("hx stats must not be cached")
+	}
+	body := rr.Body.String()
+	for _, want := range []string{
+		`<hx-partial hx-target="#stat-created" hx-swap="textContent">1</hx-partial>`,
+		`<hx-partial hx-target="#stat-burned" hx-swap="textContent">1</hx-partial>`,
+		`<hx-partial hx-target="#stat-expired" hx-swap="textContent">0</hx-partial>`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("hx body missing %s in %s", want, body)
+		}
+	}
+	if strings.Contains(body, "passphrase") || strings.Contains(body, "{") {
+		t.Fatalf("hx stats leaked json or passphrase count: %s", body)
+	}
+}
+
+func TestFormatCount(t *testing.T) {
+	cases := []struct {
+		n    int64
+		want string
+	}{
+		{0, "0"},
+		{12, "12"},
+		{100, "100"},
+		{1000, "1,000"},
+		{1000000, "1,000,000"},
+		{-12, "-12"},
+	}
+	for _, tc := range cases {
+		if got := formatCount(tc.n); got != tc.want {
+			t.Fatalf("formatCount(%d)=%q want %q", tc.n, got, tc.want)
+		}
+	}
 }
 
 func TestAboutPage(t *testing.T) {
@@ -477,6 +537,12 @@ func TestAboutPage(t *testing.T) {
 	}
 	if !bytes.Contains(rr.Body.Bytes(), []byte("vdev")) {
 		t.Fatal("about page missing version")
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte("/static/htmx.min.js?v=1")) || !bytes.Contains(rr.Body.Bytes(), []byte(`<body hx-boost="false">`)) {
+		t.Fatal("about page missing htmx or boost off")
+	}
+	if bytes.Contains(rr.Body.Bytes(), []byte("/static/ui.js")) {
+		t.Fatal("about page must not load the create controller")
 	}
 }
 

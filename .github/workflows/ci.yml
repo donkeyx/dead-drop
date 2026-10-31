@@ -86,7 +86,7 @@ jobs:
         run: make wasm
 
       - name: Check browser JavaScript
-        run: node --check web/static/deaddrop.js && node --check web/static/ui.js
+        run: node --check web/static/deaddrop.js && node --check web/static/ui.js && node --check web/static/htmx.min.js && node --check web/static/hx-pending.js
 
       - name: Run vector interop harness
         run: node web/static/wasm_vectors.mjs

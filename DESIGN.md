@@ -894,7 +894,8 @@ HTMX handles non-crypto UI chrome only.
 
 - CSP as specified; vendored HTMX; no third-party scripts.  
 - Self-hosters who modify templates/WASM are **inside the TCB** (README).  
-- Manual or Playwright: create + reveal paths satisfy the above.
+- Manual or Playwright: create + reveal paths satisfy the above.  
+- Public counters are the htmx 4 surface: `hx-action` GET, `<hx-partial>` text updates, `hx-pending`, and `hx-status`. The footer swap is `innerHTML` so the pending note can sit inside the target; a body that is only partials does not replace that target. `innerMorph` is unused on this page because that swap style hides the whole target while pending. View transitions are on. Create and reveal stay in `ui.js`.
 
 ---
 

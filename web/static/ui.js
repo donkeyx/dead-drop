@@ -136,7 +136,7 @@
       meta.textContent = parts.join(" ");
       result.className = "success";
       result.append(label, row, meta);
-      loadDropStats();
+      refreshDropStats();
       byId("secret").value = "";
       byId("file").value = "";
       byId("passphrase").value = "";
@@ -323,19 +323,10 @@
   document.querySelectorAll("button:not(.visibility-toggle)").forEach((button) => {
     button.dataset.label = button.textContent;
   });
-  async function loadDropStats() {
+  function refreshDropStats() {
     const el = byId("drop-stats");
-    if (!el) return;
-    try {
-      const res = await fetch("/api/v1/stats", { headers: { Accept: "application/json" } });
-      if (!res.ok) return;
-      const s = await res.json();
-      const n = (v) => Number(v || 0).toLocaleString();
-      el.textContent = n(s.created) + " created · " + n(s.burned) + " burned · " + n(s.expired) + " expired";
-      el.hidden = false;
-    } catch (_) {
-      /* keep hidden */
-    }
+    if (!el || !window.htmx) return;
+    window.htmx.trigger(document.body, "refresh-stats");
   }
 
   if (location.pathname.startsWith("/s/")) {
@@ -344,5 +335,4 @@
   } else {
     setupTurnstile().catch(() => {});
   }
-  loadDropStats();
 })();
