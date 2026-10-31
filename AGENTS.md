@@ -15,6 +15,7 @@
 - Run `make vectors` after changing the normative blob implementation or golden vectors; it regenerates vectors and then runs all tests.
 - Run `make wasm-test` to rebuild the WASM module and run the Node golden-vector interop harness. It requires `make`, Node, and a Go toolchain with JS/WASM support.
 - Run `gofmt` on changed Go files. There is no separate repository lint configuration.
+- When a dependency, base image, Helm release, or vendored browser library has a new version, read what changed before bumping. Move to the current release. Adopt behavior that makes this app better. Leave a feature out when it would put plaintext, the fragment key, or a passphrase on a request, or when this app has no use for it. Run the local checks before pushing.
 - Before pushing CI or Playwright workflow changes, run `make test-browser-container` (podman or docker). That is the official `mcr.microsoft.com/playwright` image pinned to `@playwright/test`. Do not iterate those jobs on GitHub Actions first. The image has Chromium and bash, but not `make`; set `GOFLAGS=-buildvcs=false` for `go build` / `go run` inside it.
 - Passphrases must come from an environment variable or prompt, never command-line arguments; avoid logging plaintext, keys, fragments, passphrases, or raw blobs.
 
@@ -34,5 +35,6 @@
 ## Current Scope
 
 - PR1–PR7 are complete: SEAL library, offline CLI, FS/SQLite/Postgres stores, HTTP API, network put/get, WASM crypto/vector harness, and the browser create/reveal/`/about` UI.
-- CI (PR + master) is tests and helm lint only. A `v*` tag on master publishes image + chart, then deploys; **Run workflow** on Release redeploys that tag. Chart is 0.1.11. No image publish from master. If HTMX is added later for non-sensitive chrome, it must never submit plaintext, fragment keys, or passphrases.
+- CI (PR + master) is tests and helm lint only. A `v*` tag on master publishes image + chart, then deploys; **Run workflow** on Release redeploys that tag. Chart is 0.1.11. No image publish from master.
+- **Todo:** [issue #58](https://github.com/donkeyx/dead-drop/issues/58). Move create/reveal chrome to vendored htmx 4, the same pass as investment-helper `fa3aed7` (`hx-action`, `innerMorph`, `hx-status`, `<hx-partial>`, `hx-pending`, view transitions except a high-frequency refresh). The UI is still vanilla `web/static/ui.js`. HTMX must never submit plaintext, fragment keys, or passphrases. Keep boost off on reveal.
 - The design and README are the source of product/security constraints; preserve their wording around “client-side encrypted” and avoid unqualified “zero-knowledge” claims.
