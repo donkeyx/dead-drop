@@ -78,7 +78,7 @@ kubectl apply -f deploy/github-deploy-rbac.yaml
 # paste ~/.secure/dead-drop-github-deploy.kubeconfig into KUBECONFIG
 ```
 
-`ci` Hub credentials must not be copied here. The DB URL, origin TLS, and Grafana OTLP token stay as cluster Secrets; they are not in GitHub.
+`ci` Hub credentials must not be copied here. The DB URL, origin TLS, and Grafana OTLP token stay as cluster Secrets; they are not in GitHub. `donkeyx-dev-origin-tls` is the existing Cloudflare origin certificate and stays until replaced. New hostnames on this cluster use ClusterIssuer `letsencrypt-prod`, documented in my-infra `clusters/do-cluster-01/certificates/`.
 
 ## Metrics and Grafana Cloud
 
